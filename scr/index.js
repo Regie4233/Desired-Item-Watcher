@@ -41,11 +41,6 @@ client.login(process.env.TOKEN);
 
 
 
-
-async function configureBrowser() {
-    return page;
-}
-
 async function checkPrice() {
     const browser = await puppeteer.launch();
     const page = await browser.newPage();
