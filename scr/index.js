@@ -36,8 +36,8 @@ client.on("messageCreate", (m) => {
     });
   } 
 });
-client.login(process.env.TOKEN);
 
+client.login(process.env.TOKEN);
 
 
 
