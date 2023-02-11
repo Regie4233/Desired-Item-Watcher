@@ -30,12 +30,11 @@ client.on("messageCreate", (m) => {
     m.reply("Fetching Price.. lenovo x1 extreme");
 
     console.log("Working on price");
-    // checkPrice().then((a) => {
-    //   m.reply(`Current Price: ${a}`);
-    //   working = false;
-    // });
     m.reply(`Current Price: Lenovo x1 extreme ${current}`);
     working = false;
+  } else if (m.content === "test") {
+    const chanl = client.channels.cache.get('1073243133346848771');
+    chanl.send('<@726243976927248412>');
   }
 });
 
@@ -69,28 +68,95 @@ async function checkPrice() {
     const text = bbb.innerText;
     return text;
   });
- 
+
   // aaa.replace('$','');
   // aaa.replace(',','');
   console.log(aaa);
- const stri = aaa.replace('$','').replace(',','');
- console.log(stri);
+  const stri = aaa.replace('$', '').replace(',', '');
+  console.log(stri);
   await browser.close();
   return parseFloat(stri);
 }
 
-setInterval(async () => {
-  let resp = await checkPrice();
-  // console.log(resp);
-  if (current !== resp) {
-    current = resp;
-    const chanl = client.channels.cache.get('1073243133346848771');
-    chanl.send(`Price now: Lenovo x1 Extreme ${resp}`);
-  }
-},8000);
 
-// async function testrun(){
-//   const vvv = await checkPrice();
-//   console.log(`r ${vvv}`);
-// }
-// testrun();
+async function Run(url, selector, userId, itemName) {
+  
+    
+  const browser = await puppeteer.launch();
+  const page = await browser.newPage();
+  await page.goto(url,
+    {
+      waitUntil: "networkidle2",
+      timeout: 0,
+    });
+
+  await page.reload();
+
+
+  const aaa = await page.evaluate((selector) => {
+    const bbb = document.querySelector(selector);
+    const text = bbb.innerText;
+    return text;
+  }, selector);
+
+  // aaa.replace('$','');
+  // aaa.replace(',','');
+  console.log(aaa);
+  const stri = aaa.replace('$', '').replace(',', '');
+  console.log(stri);
+  const floatprice = parseFloat(stri);
+  const chanl = client.channels.cache.get('1073243133346848771');
+  chanl.send(`Price for ${itemName} : $${floatprice}  ${userId}`);
+
+  await browser.close();
+  // return parseFloat(stri);
+}
+
+async function Run_GetAttribute(url, selector, attri, userId, itemName) {
+  
+    
+  const browser = await puppeteer.launch();
+  const page = await browser.newPage();
+  await page.goto(url,
+    {
+      waitUntil: "networkidle2",
+      timeout: 0,
+    });
+
+  await page.reload();
+
+
+  // const aaa = await page.$eval(selector, element=> element.getAttribute(attri));
+
+  const aaa = await page.evaluate(`document.querySelector(${selector}).getAttribute(${attri})`);
+
+  // aaa.replace('$','');
+  // aaa.replace(',','');
+  console.log(aaa);
+  const stri = aaa.replace('$', '').replace(',', '');
+  console.log(stri);
+  const floatprice = parseFloat(stri);
+  const chanl = client.channels.cache.get('1073243133346848771');
+  chanl.send(`Price for ${itemName} : $${floatprice}  ${userId}`);
+
+  await browser.close();
+  // return parseFloat(stri);
+}
+// setInterval(async () => {
+//   Run('https://www.lenovo.com/us/en/p/laptops/thinkpad/thinkpadx1/x1-extreme-g4/20y5007jus', '.final-price', 726243976927248412, 'Lenovo');
+// },8000);
+
+Run('https://www.lenovo.com/us/en/p/laptops/thinkpad/thinkpadx1/x1-extreme-g4/20y5007jus', '.final-price', '<@726243976927248412>', 'Lenovo X1 Extreme');
+Run_GetAttribute('https://www.microcenter.com/product/660836/asus-nvidia-geforce-rtx-4080-tuf-gaming-overclocked-triple-fan-16gb-gddr6x-pcie-40-graphics-card', '.dollar2022', 'content', '<@726243976927248412>', 'Nvidia 4080');
+
+
+// setInterval(async () => {
+//   let resp = await checkPrice();
+//   // console.log(resp);
+//   if (current !== resp) {
+//     current = resp;
+//     const chanl = client.channels.cache.get('1073243133346848771');
+//     chanl.send(`Price now: Lenovo x1 Extreme ${resp}`);
+//   }
+// },8000);
+
