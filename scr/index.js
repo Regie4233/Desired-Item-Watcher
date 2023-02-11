@@ -3,8 +3,31 @@ const { Client, GatewayIntentBits } = require("discord.js");
 const { default: puppeteer } = require("puppeteer");
 
 
-let current = 0;
+const str1 = '<@';
+const str2 = '>';
 let working = false;
+
+let usersPrefs = [
+  {
+    userId: '726243976927248412',
+    target: {
+      url: 'https://www.lenovo.com/us/en/p/laptops/thinkpad/thinkpadx1/x1-extreme-g4/20y5007jus',
+      selector: '.final-price',
+      itemName: 'Lenovo X1 Extreme',
+      storedPrice: 0
+    }
+  },
+  {
+    userId: '213528934346653696',
+    target: {
+      url: 'https://www.microcenter.com/product/660836/asus-nvidia-geforce-rtx-4080-tuf-gaming-overclocked-triple-fan-16gb-gddr6x-pcie-40-graphics-card',
+      selector: '.big-price',
+      itemName: 'Nvidia 4080',
+      storedPrice: 0
+    }
+  }
+
+]
 
 const client = new Client({
   intents: [
@@ -27,10 +50,15 @@ client.on("messageCreate", (m) => {
   if (m.content === "check" && working === false) {
     working = true;
 
-    m.reply("Fetching Price.. lenovo x1 extreme");
+    for (let i = 0; i < usersPrefs.length; i++) {
+      if (m.author.id === usersPrefs[i].userId) {
 
-    console.log("Working on price");
-    m.reply(`Current Price: Lenovo x1 extreme ${current}`);
+        const temp = str1.concat(usersPrefs[i].userId).concat(str2);
+        m.reply(`Your Items: ${temp} \n ${usersPrefs[i].target.itemName} : ${usersPrefs[i].target.storedPrice}`);
+
+      }
+    }
+
     working = false;
   } else if (m.content === "test") {
     const chanl = client.channels.cache.get('1073243133346848771');
@@ -80,8 +108,8 @@ async function checkPrice() {
 
 
 async function Run(url, selector, userId, itemName) {
-  
-    
+
+
   const browser = await puppeteer.launch();
   const page = await browser.newPage();
   await page.goto(url,
@@ -101,23 +129,44 @@ async function Run(url, selector, userId, itemName) {
 
   // aaa.replace('$','');
   // aaa.replace(',','');
-  console.log(aaa);
+  // console.log(aaa);
   const stri = aaa.replace('$', '').replace(',', '');
-  console.log(stri);
+  // console.log(stri);
   const floatprice = parseFloat(stri);
-  const chanl = client.channels.cache.get('1073243133346848771');
-  chanl.send(`Price for ${itemName} : $${floatprice}  ${userId}`);
+  // const chanl = client.channels.cache.get('1073243133346848771');
+  // chanl.send(`Price for ${itemName} : $${floatprice}  ${userId}`);
 
   await browser.close();
-  // return parseFloat(stri);
+  console.log(floatprice);
+  return parseFloat(floatprice);
 }
 
-
+async function Execute_Data_Checks() {
+  for (let i = 0; i < usersPrefs.length; i++) {
+    const price = await Run(usersPrefs[i].target.url, usersPrefs[i].target.selector, usersPrefs[i].userId, usersPrefs[i].target.itemName);
+    console.log(`q ${price}`);
+    usersPrefs[i].target.storedPrice = price;
+  }
+}
+// Execute_Data_Checks();
 setInterval(async () => {
-  await Run('https://www.lenovo.com/us/en/p/laptops/thinkpad/thinkpadx1/x1-extreme-g4/20y5007jus', '.final-price', '<@726243976927248412>', 'Lenovo X1 Extreme');
-  await Run('https://www.microcenter.com/product/660836/asus-nvidia-geforce-rtx-4080-tuf-gaming-overclocked-triple-fan-16gb-gddr6x-pcie-40-graphics-card', '.big-price', '<@726243976927248412>', 'Nvidia 4080');
+  // await Run('https://www.lenovo.com/us/en/p/laptops/thinkpad/thinkpadx1/x1-extreme-g4/20y5007jus', '.final-price', '<@726243976927248412>', 'Lenovo X1 Extreme');
+  // await Run('https://www.microcenter.com/product/660836/asus-nvidia-geforce-rtx-4080-tuf-gaming-overclocked-triple-fan-16gb-gddr6x-pcie-40-graphics-card', '.big-price', '<@726243976927248412>', 'Nvidia 4080');
 
-},60000);
+  for (let i = 0; i < usersPrefs.length; i++) {
+    const price = await Run(usersPrefs[i].target.url, usersPrefs[i].target.selector, usersPrefs[i].userId, usersPrefs[i].target.itemName);
+    console.log(`${usersPrefs[i].target.storedPrice}  ${price}`);
+    if (price !== usersPrefs[i].target.storedPrice) {
+      const temp = str1.concat(usersPrefs[i].userId).concat(str2);
+
+      const chanl = client.channels.cache.get('1073243133346848771');
+      chanl.send(`New Price Alert!! ${temp} \n ${usersPrefs[i].target.itemName} is now ${price} from usersPrefs[i].target.storedPrice`);
+
+    }
+    usersPrefs[i].target.storedPrice = price;
+  }
+
+}, 8000);
 
 // Run('https://www.lenovo.com/us/en/p/laptops/thinkpad/thinkpadx1/x1-extreme-g4/20y5007jus', '.final-price', '<@726243976927248412>', 'Lenovo X1 Extreme');
 // // Run_GetAttribute('https://www.microcenter.com/product/660836/asus-nvidia-geforce-rtx-4080-tuf-gaming-overclocked-triple-fan-16gb-gddr6x-pcie-40-graphics-card', '.big-price', '<@726243976927248412>', 'Nvidia 4080');
