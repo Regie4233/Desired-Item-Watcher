@@ -112,42 +112,16 @@ async function Run(url, selector, userId, itemName) {
   // return parseFloat(stri);
 }
 
-async function Run_GetAttribute(url, selector, attri, userId, itemName) {
-  
-    
-  const browser = await puppeteer.launch();
-  const page = await browser.newPage();
-  await page.goto(url,
-    {
-      waitUntil: "networkidle2",
-      timeout: 0,
-    });
 
-  await page.reload();
+setInterval(async () => {
+  await Run('https://www.lenovo.com/us/en/p/laptops/thinkpad/thinkpadx1/x1-extreme-g4/20y5007jus', '.final-price', '<@726243976927248412>', 'Lenovo X1 Extreme');
+  await Run('https://www.microcenter.com/product/660836/asus-nvidia-geforce-rtx-4080-tuf-gaming-overclocked-triple-fan-16gb-gddr6x-pcie-40-graphics-card', '.big-price', '<@726243976927248412>', 'Nvidia 4080');
 
+},60000);
 
-  // const aaa = await page.$eval(selector, element=> element.getAttribute(attri));
-
-  const aaa = await page.evaluate(`document.querySelector(${selector}).getAttribute(${attri})`);
-
-  // aaa.replace('$','');
-  // aaa.replace(',','');
-  console.log(aaa);
-  const stri = aaa.replace('$', '').replace(',', '');
-  console.log(stri);
-  const floatprice = parseFloat(stri);
-  const chanl = client.channels.cache.get('1073243133346848771');
-  chanl.send(`Price for ${itemName} : $${floatprice}  ${userId}`);
-
-  await browser.close();
-  // return parseFloat(stri);
-}
-// setInterval(async () => {
-//   Run('https://www.lenovo.com/us/en/p/laptops/thinkpad/thinkpadx1/x1-extreme-g4/20y5007jus', '.final-price', 726243976927248412, 'Lenovo');
-// },8000);
-
-Run('https://www.lenovo.com/us/en/p/laptops/thinkpad/thinkpadx1/x1-extreme-g4/20y5007jus', '.final-price', '<@726243976927248412>', 'Lenovo X1 Extreme');
-Run_GetAttribute('https://www.microcenter.com/product/660836/asus-nvidia-geforce-rtx-4080-tuf-gaming-overclocked-triple-fan-16gb-gddr6x-pcie-40-graphics-card', '.dollar2022', 'content', '<@726243976927248412>', 'Nvidia 4080');
+// Run('https://www.lenovo.com/us/en/p/laptops/thinkpad/thinkpadx1/x1-extreme-g4/20y5007jus', '.final-price', '<@726243976927248412>', 'Lenovo X1 Extreme');
+// // Run_GetAttribute('https://www.microcenter.com/product/660836/asus-nvidia-geforce-rtx-4080-tuf-gaming-overclocked-triple-fan-16gb-gddr6x-pcie-40-graphics-card', '.big-price', '<@726243976927248412>', 'Nvidia 4080');
+// Run('https://www.microcenter.com/product/660836/asus-nvidia-geforce-rtx-4080-tuf-gaming-overclocked-triple-fan-16gb-gddr6x-pcie-40-graphics-card', '.big-price', '<@726243976927248412>', 'Nvidia 4080');
 
 
 // setInterval(async () => {
