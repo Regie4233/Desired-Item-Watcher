@@ -148,7 +148,7 @@ async function Execute_Data_Checks() {
     usersPrefs[i].target.storedPrice = price;
   }
 }
-// Execute_Data_Checks();
+Execute_Data_Checks();
 setInterval(async () => {
   // await Run('https://www.lenovo.com/us/en/p/laptops/thinkpad/thinkpadx1/x1-extreme-g4/20y5007jus', '.final-price', '<@726243976927248412>', 'Lenovo X1 Extreme');
   // await Run('https://www.microcenter.com/product/660836/asus-nvidia-geforce-rtx-4080-tuf-gaming-overclocked-triple-fan-16gb-gddr6x-pcie-40-graphics-card', '.big-price', '<@726243976927248412>', 'Nvidia 4080');
@@ -166,7 +166,7 @@ setInterval(async () => {
     usersPrefs[i].target.storedPrice = price;
   }
 
-}, 8000);
+},800000 );
 
 // Run('https://www.lenovo.com/us/en/p/laptops/thinkpad/thinkpadx1/x1-extreme-g4/20y5007jus', '.final-price', '<@726243976927248412>', 'Lenovo X1 Extreme');
 // // Run_GetAttribute('https://www.microcenter.com/product/660836/asus-nvidia-geforce-rtx-4080-tuf-gaming-overclocked-triple-fan-16gb-gddr6x-pcie-40-graphics-card', '.big-price', '<@726243976927248412>', 'Nvidia 4080');
