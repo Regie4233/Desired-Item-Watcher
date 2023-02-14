@@ -1,33 +1,39 @@
 require("dotenv").config();
+const lib = require('./dbmanager');
 const { Client, GatewayIntentBits } = require("discord.js");
 const { default: puppeteer } = require("puppeteer");
-
+const mongoose = require('mongoose');
+mongoose.connect("mongodb://localhost/sw-usersDb", (x) => {
+  console.log(`Database connected`);
+});
+const User = require('./user_model');
+const date = new Date();
 
 const str1 = '<@';
 const str2 = '>';
 let working = false;
 
-let usersPrefs = [
-  {
-    userId: '726243976927248412',
-    target: {
-      url: 'https://www.lenovo.com/us/en/p/laptops/thinkpad/thinkpadx1/x1-extreme-g4/20y5007jus',
-      selector: '.final-price',
-      itemName: 'Lenovo X1 Extreme',
-      storedPrice: 0
-    }
-  },
-  {
-    userId: '213528934346653696',
-    target: {
-      url: 'https://www.microcenter.com/product/660836/asus-nvidia-geforce-rtx-4080-tuf-gaming-overclocked-triple-fan-16gb-gddr6x-pcie-40-graphics-card',
-      selector: '.big-price',
-      itemName: 'Nvidia 4080',
-      storedPrice: 0
-    }
-  }
+// let usersPrefs = [
+//   {
+//     userId: '726243976927248412',
+//     target: {
+//       url: 'https://www.lenovo.com/us/en/p/laptops/thinkpad/thinkpadx1/x1-extreme-g4/20y5007jus',
+//       selector: '.final-price',
+//       itemName: 'Lenovo X1 Extreme',
+//       storedPrice: 0
+//     }
+//   },
+//   {
+//     userId: '213528934346653696',
+//     target: {
+//       url: 'https://www.microcenter.com/product/660836/asus-nvidia-geforce-rtx-4080-tuf-gaming-overclocked-triple-fan-16gb-gddr6x-pcie-40-graphics-card',
+//       selector: '.big-price',
+//       itemName: 'Nvidia 4080',
+//       storedPrice: 0
+//     }
+//   }
 
-]
+// ]
 
 const client = new Client({
   intents: [
@@ -42,7 +48,7 @@ client.on("ready", (c) => {
   console.log(`${c.user.tag} is online`);
 });
 
-client.on("messageCreate", (m) => {
+client.on("messageCreate", async (m) => {
   if (m.author.bot) {
     return;
   }
@@ -50,14 +56,30 @@ client.on("messageCreate", (m) => {
   if (m.content === "check" && working === false) {
     working = true;
 
-    for (let i = 0; i < usersPrefs.length; i++) {
-      if (m.author.id === usersPrefs[i].userId) {
+    const user = await User.where('discordId').equals(m.author.id.toString());
+    const temp = str1.concat(user[0].discordId).concat(str2);
+    const chanl = client.channels.cache.get('1073243133346848771');
 
-        const temp = str1.concat(usersPrefs[i].userId).concat(str2);
-        m.reply(`Your Items: ${temp} \n ${usersPrefs[i].target.itemName} : ${usersPrefs[i].target.storedPrice}`);
+    let message = []
 
-      }
+    for (let i = 0; i < user[0].items.length; i++) {
+      message.push({
+        name: user[0].items[i].name,
+        currentPrice: user[0].items[i].current.price,
+        highestPrice: user[0].items[i].highest.price,
+        lowestPrice: user[0].items[i].lowest.price,
+      })
+
     }
+    message.forEach(element => {
+      m.reply(`${temp} \n ${element.name} \n Current ${element.currentPrice} \n Highest ${element.highestPrice} \n Lowest ${element.lowestPrice}`);
+    });
+    
+
+
+
+
+
 
     working = false;
   } else if (m.content === "test") {
@@ -70,46 +92,10 @@ client.login(process.env.TOKEN);
 
 
 
-async function checkPrice() {
-  const browser = await puppeteer.launch();
-  const page = await browser.newPage();
-  await page.goto('https://www.lenovo.com/us/en/p/laptops/thinkpad/thinkpadx1/x1-extreme-g4/20y5007jus',
-    {
-      waitUntil: "networkidle2",
-      // Remove the timeout
-      timeout: 0,
-    });
-  // await page.goto('https://www.google.com/search?q=time&client=ms-android-hms-tmobile-us&sxsrf=AJOqlzVeVY8Y_qvgIALqiYprILtP7rIkbA%3A1675962794188&ei=qinlY-yVC5mv5NoP0aG42A8&ved=0ahUKEwjskoT494j9AhWZF1kFHdEQDvsQ4dUDCBA&uact=5&oq=time&gs_lcp=Cgxnd3Mtd2l6LXNlcnAQAzIFCAAQkQIyBQgAEJECMgoIABCxAxCDARBDMgQIABBDMgUIABCABDIHCAAQsQMQQzILCC4QgAQQxwEQrwEyBAgAEEMyCwgAEIAEELEDEIMBMgUIABCABDoECCMQJzoOCC4QgAQQsQMQxwEQ0QM6CAgAELEDEIMBOg4ILhDHARCxAxDRAxCABDoLCC4QgAQQsQMQgwE6CAguEIAEELEDOggIABCABBCxA0oECEEYAEoECEYYAFAAWOcEYJYGaABwAXgAgAGXAYgB2QOSAQMxLjOYAQCgAQHAAQE&sclient=gws-wiz-serp',
-  //   {
-  //     waitUntil: "networkidle2",
-  //     // Remove the timeout
-  //     timeout: 0,
-  //   });
 
-
-  await page.reload();
-
-
-  const aaa = await page.evaluate(() => {
-    const bbb = document.querySelector('.final-price');
-    // const bbb = document.querySelector('.gsrt');
-    const text = bbb.innerText;
-    return text;
-  });
-
-  // aaa.replace('$','');
-  // aaa.replace(',','');
-  console.log(aaa);
-  const stri = aaa.replace('$', '').replace(',', '');
-  console.log(stri);
-  await browser.close();
-  return parseFloat(stri);
-}
-
-
-async function Run(url, selector, userId, itemName) {
-
-
+async function Run(item) {
+  const url = item.url;
+  const selector = item.selector;
   const browser = await puppeteer.launch();
   const page = await browser.newPage();
   await page.goto(url,
@@ -127,59 +113,89 @@ async function Run(url, selector, userId, itemName) {
     return text;
   }, selector);
 
-  // aaa.replace('$','');
-  // aaa.replace(',','');
-  // console.log(aaa);
   const stri = aaa.replace('$', '').replace(',', '');
-  // console.log(stri);
+
   const floatprice = parseFloat(stri);
-  // const chanl = client.channels.cache.get('1073243133346848771');
-  // chanl.send(`Price for ${itemName} : $${floatprice}  ${userId}`);
+
 
   await browser.close();
-  console.log(floatprice);
-  return parseFloat(floatprice);
+  console.log(`Parser found: ${floatprice}`);
+
+
+  if (floatprice !== item.current.price) {
+    if (floatprice >= item.current.price) {
+      item.highest.price = floatprice;
+      item.highest.date = date.toLocaleDateString();
+    }
+    if (floatprice <= item.current.price) {
+      item.lowest.price = floatprice;
+      item.lowest.date = date.toLocaleDateString();
+    }
+    item.current.price = floatprice;
+    item.current.date = date.toLocaleDateString();
+
+  }
+  if (item.lowest.price === 0) {
+    item.lowest.price = item.current.price;
+  }
+  console.log(item.current.price);
+  // return floatprice;
 }
 
-async function Execute_Data_Checks() {
-  for (let i = 0; i < usersPrefs.length; i++) {
-    const price = await Run(usersPrefs[i].target.url, usersPrefs[i].target.selector, usersPrefs[i].userId, usersPrefs[i].target.itemName);
-    console.log(`q ${price}`);
-    usersPrefs[i].target.storedPrice = price;
-  }
-}
+// async function Execute_Data_Checks() {
+//   for (let i = 0; i < usersPrefs.length; i++) {
+//     const price = await Run(usersPrefs[i].target.url, usersPrefs[i].target.selector, usersPrefs[i].userId, usersPrefs[i].target.itemName);
+//     console.log(`q ${price}`);
+//     usersPrefs[i].target.storedPrice = price;
+//   }
+// }
 // Execute_Data_Checks();
 setInterval(async () => {
-  // await Run('https://www.lenovo.com/us/en/p/laptops/thinkpad/thinkpadx1/x1-extreme-g4/20y5007jus', '.final-price', '<@726243976927248412>', 'Lenovo X1 Extreme');
-  // await Run('https://www.microcenter.com/product/660836/asus-nvidia-geforce-rtx-4080-tuf-gaming-overclocked-triple-fan-16gb-gddr6x-pcie-40-graphics-card', '.big-price', '<@726243976927248412>', 'Nvidia 4080');
 
-  for (let i = 0; i < usersPrefs.length; i++) {
-    const price = await Run(usersPrefs[i].target.url, usersPrefs[i].target.selector, usersPrefs[i].userId, usersPrefs[i].target.itemName);
-    console.log(`${usersPrefs[i].target.storedPrice}  ${price}`);
-    if (price !== usersPrefs[i].target.storedPrice) {
-      const temp = str1.concat(usersPrefs[i].userId).concat(str2);
+  await Run_Parse_Website();
 
-      const chanl = client.channels.cache.get('1073243133346848771');
-      chanl.send(`New Price Alert!! ${temp} \n ${usersPrefs[i].target.itemName} is now ${price} from usersPrefs[i].target.storedPrice`);
 
+}, 900000);
+
+
+async function test1() {
+  const temp = str1.concat("726243976927248412").concat(str2);
+  const user = await User.find({ discordId: '726243976927248412' });
+
+}
+Run_Parse_Website();
+
+async function Run_Parse_Website() {
+
+  User.find({}, (err, resp) => {
+    if (err) console.log(err);
+    for (let i = 0; i < resp.length; i++) {
+      for (let y = 0; y < resp[i].items.length; y++) {
+        Run(resp[i].items[y]).then(() => resp[i].save());
+        // console.log(`${resp[i].items[y].name} Price ${resp[i].items[y].current.price}`);
+      }
     }
-    usersPrefs[i].target.storedPrice = price;
+
+  });
+
+}
+
+// Add_Item_Validation('726243976927248412', 'https://www.microcenter.com/product/650024/asus-zenbook-pro-14-duo-oled-145-intel-evo-platform-laptop-computer-black', 
+// '.big-price', ' ASUS Zenbook 14 Duo OLED');
+
+// Execute_Update(); 1074809115844550756
+
+
+async function Add_Item_Validation(disId, url, selector, itemName) {
+  try {
+    const browser = await puppeteer.launch();
+    const page = await browser.newPage();
+    await page.goto(url, { waitUntil: 'load', timeout: 0 })
+    lib.Add_New_to_Database(disId, url, selector, itemName);
+
+  } catch (e) {
+    const chanl = client.channels.cache.get('1073243133346848771');
+    chanl.send(`Website not found \n ${url}`);
   }
-
-}, 8000);
-
-// Run('https://www.lenovo.com/us/en/p/laptops/thinkpad/thinkpadx1/x1-extreme-g4/20y5007jus', '.final-price', '<@726243976927248412>', 'Lenovo X1 Extreme');
-// // Run_GetAttribute('https://www.microcenter.com/product/660836/asus-nvidia-geforce-rtx-4080-tuf-gaming-overclocked-triple-fan-16gb-gddr6x-pcie-40-graphics-card', '.big-price', '<@726243976927248412>', 'Nvidia 4080');
-// Run('https://www.microcenter.com/product/660836/asus-nvidia-geforce-rtx-4080-tuf-gaming-overclocked-triple-fan-16gb-gddr6x-pcie-40-graphics-card', '.big-price', '<@726243976927248412>', 'Nvidia 4080');
-
-
-// setInterval(async () => {
-//   let resp = await checkPrice();
-//   // console.log(resp);
-//   if (current !== resp) {
-//     current = resp;
-//     const chanl = client.channels.cache.get('1073243133346848771');
-//     chanl.send(`Price now: Lenovo x1 Extreme ${resp}`);
-//   }
-// },8000);
+}
 
