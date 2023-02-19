@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const { update } = require('./user_model');
 const User = require('./user_model');
-mongoose.connect("mongodb://localhost/sw-usersDb", (x) => {
+mongoose.connect("mongodb://127.0.0.1/sw-usersDb", (x) => {
     console.log(`Database connected`);
 });
 

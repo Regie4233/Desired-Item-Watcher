@@ -8,8 +8,12 @@ const { default: puppeteer } = require("puppeteer");
 
 const lib = require('./dbmanager');
 const mongoose = require('mongoose');
-mongoose.connect("mongodb://localhost/sw-usersDb", (x) => {
+// mongoose.connect("mongodb://localhost/sw-usersDb", (x) => {
+//   console.log(`Database connected`);
+// });
+mongoose.connect("mongodb://127.0.0.1/sw-usersDb", (x) => {
   console.log(`Database connected`);
+  Initialize_Bot();
 });
 const User = require('./user_model');
 const date = new Date();
@@ -361,7 +365,7 @@ async function getWebsite(url, page) {
 async function Database_Validation(url, discordid){
     if(await User.exists({discordId: discordid})){
     const user = await User.where('discordId').equals(discordid.toString()); 
-    console.log(user[0]);
+   // console.log(user[0]);
     for(let i = 0; i < user[0].items.length; i++){
       if(user[0].items[i].url === url){
         //item match deny
