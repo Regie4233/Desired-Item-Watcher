@@ -113,7 +113,7 @@ async function Initialize_Bot() {
   }
 }
 // client.login(process.env.TOKEN);
-Initialize_Bot();
+
 
 
 // client.on('interactionCreate', async (interaction) => {
