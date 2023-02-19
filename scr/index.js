@@ -112,9 +112,6 @@ async function Initialize_Bot() {
     console.log(e);
   }
 }
-// client.login(process.env.TOKEN);
-
-
 
 // client.on('interactionCreate', async (interaction) => {
 //   if (!interaction.isChatInputCommand()) return;
