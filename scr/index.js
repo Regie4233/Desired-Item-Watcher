@@ -1,8 +1,9 @@
 require("dotenv").config();
 
-const { Client, GatewayIntentBits, ModalBuilder, ActionRowBuilder, TextInputBuilder, TextInputStyle, Routes, Events, StringSelectMenuBuilder, SelectMenuOptionBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
+const { Client, GatewayIntentBits, ModalBuilder, ActionRowBuilder, TextInputBuilder, TextInputStyle, Routes, Events, StringSelectMenuBuilder, SelectMenuOptionBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, Component } = require("discord.js");
 const { REST } = require('@discordjs/rest');
 const commandRequest = require('./comamnds/request');
+const commandFetch = require('./comamnds/fetch');
 const { default: puppeteer } = require("puppeteer");
 
 
@@ -30,28 +31,6 @@ const client = new Client({
     GatewayIntentBits.GuildMembers,
   ],
 });
-// let usersPrefs = [
-//   {
-//     userId: '726243976927248412',
-//     target: {
-//       url: 'https://www.lenovo.com/us/en/p/laptops/thinkpad/thinkpadx1/x1-extreme-g4/20y5007jus',
-//       selector: '.final-price',
-//       itemName: 'Lenovo X1 Extreme',
-//       storedPrice: 0
-//     }
-//   },
-//   {
-//     userId: '213528934346653696',
-//     target: {
-//       url: 'https://www.microcenter.com/product/660836/asus-nvidia-geforce-rtx-4080-tuf-gaming-overclocked-triple-fan-16gb-gddr6x-pcie-40-graphics-card',
-//       selector: '.big-price',
-//       itemName: 'Nvidia 4080',
-//       storedPrice: 0
-//     }
-//   }
-
-// ]
-
 
 const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
 client.on("ready", (c) => {
@@ -104,6 +83,7 @@ async function Initialize_Bot() {
   try {
     const commands = [
       commandRequest.data.toJSON(),
+      commandFetch.data.toJSON()
     ];
     console.log('Started refreshing application (/) commands.');
     await rest.put(Routes.applicationGuildCommands(client_id, guild_id), { body: commands },);
@@ -113,22 +93,10 @@ async function Initialize_Bot() {
   }
 }
 
-// client.on('interactionCreate', async (interaction) => {
-//   if (!interaction.isChatInputCommand()) return;
 
-//   if (interaction.commandName === commandRequest.data.name) {
-//     // const modal = new ModalBuilder()
-//     //   .setCustomId("trackerform")
-//     //   .setTitle("Request Tracker Form");
-//     console.log("!");
-
-
-//     // await interaction.showModal(modal);
-//   }
-// });
 
 client.on(Events.InteractionCreate, async interaction => {
-  if (!interaction.isChatInputCommand()) return;
+  if (!interaction.isChatInputCommand()) { return; }
 
   if (interaction.commandName === 'requestform') {
     const inputUrl = new TextInputBuilder()
@@ -138,44 +106,99 @@ client.on(Events.InteractionCreate, async interaction => {
 
     const row_url = new ActionRowBuilder().addComponents(inputUrl);
 
-
     const modal = new ModalBuilder()
       .setCustomId("trackerform")
       .setTitle("Request Tracker Form")
       .addComponents(row_url);
     await interaction.showModal(modal);
+
+  } else if (interaction.commandName === 'showitems') {
+    const user = await User.where('discordId').equals(interaction.user.id.toString());
+
+    let arr_items = [];
+
+    const embed = new EmbedBuilder()
+      .setColor(0x1CDB00);
+    user[0].items.forEach(element => {
+      embed.addFields({ name: element.name, value: `[Website Link](${element.url})`, inline: false });
+      embed.addFields({ name: " ", value: `- - Current Price: ${element.current.price} - - \n Lowest Price: ${element.lowest.price} \n  Highest Price: ${element.highest.price}`, inline: true });
+      arr_items.push({ label: `Delete: ${element.name.slice(0, 40)}`, description: `${arr_items.length}`, value: `${arr_items.length}` })
+    });
+
+    const row_dropdown = new ActionRowBuilder().addComponents(
+      new StringSelectMenuBuilder()
+        .setCustomId("deletemenu")
+        .setPlaceholder("Delete an Item")
+        .addOptions(arr_items));
+
+    await interaction.reply({ embeds: [embed], components: [row_dropdown], ephemeral: true });
+    setTimeout(() => interaction.deleteReply(), 45000);
   }
 
 
 });
 
 client.on(Events.InteractionCreate, async interaction => {
-  if (!interaction.isModalSubmit()) { return; }
-  if (interaction.customId === 'trackerform') {
-    const url_sbmt = interaction.fields.getTextInputValue('input_url');
+  if (interaction.isModalSubmit()) {
+    const channel = client.channels.cache.get('1073243133346848771');
+    if (interaction.customId === 'trackerform') {
+      const url_sbmt = interaction.fields.getTextInputValue('input_url');
 
-    await interaction.reply({ content: 'Requesting...', ephemeral: true });
+      await interaction.reply({ content: 'Requesting...', ephemeral: true });
 
-    const site_valid = await Website_Validator(url_sbmt, interaction.user.id);
-    const itemPrice =  parseFloat(site_valid.price);
-    const itemName = site_valid.name;
-    const itemSelector = site_valid.selector;
-    console.log(`${site_valid.accepted} : ${itemName} : ${itemPrice} : ${itemSelector}`);
-    if(site_valid.accepted){
-      if(!await Database_Validation(url_sbmt, interaction.user.id)){
-        await interaction.editReply({ content: `Success! Adding to pool..`, ephemeral: true });
-        await lib.Add_New_to_Database(interaction.user.id, url_sbmt, itemSelector, itemName);
-      }else{
-        await interaction.editReply({ content: `Website already exists in your account!`, ephemeral: true });
+      const site_valid = await Website_Validator(url_sbmt, interaction.user.id);
+      const itemPrice = parseFloat(site_valid.price);
+      const itemName = site_valid.name;
+      const itemSelector = site_valid.selector;
+      console.log(`${site_valid.accepted} : ${itemName} : ${itemPrice} : ${itemSelector}`);
+      if (site_valid.accepted) {
+        if (!await Database_Validation(url_sbmt, interaction.user.id)) {
+          await interaction.editReply({ content: `Success! Adding to pool..`, ephemeral: true });
+          await lib.Add_New_to_Database(interaction.user.id, url_sbmt, itemSelector, itemName);
+          setTimeout(() => interaction.deleteReply(), 6000);
+        } else {
+          await interaction.editReply({ content: `Website already exists in your account!`, ephemeral: true });
+          setTimeout(() => interaction.deleteReply(), 6000);
+        }
+      } else {
+        await interaction.editReply({ content: `Website is invalid! Try again`, ephemeral: true });
+        setTimeout(() => interaction.deleteReply(), 6000);
       }
-    }else{
-      await interaction.editReply({ content: `Website is invalid! Try again`, ephemeral: true });
     }
   }
+  if (interaction.isStringSelectMenu()) {
+    const selected = interaction.values[0];
+    if (interaction.customId === 'deletemenu') {
+      console.log(selected);
+      lib.DeleteItem(interaction.user.id, selected);
+    }
+
+
+    await interaction.update({ content: "hello", ephemeral: true, components: [] });
+    setTimeout(() => interaction.deleteReply(), 40000);
+    const user = await User.where('discordId').equals(interaction.user.id.toString());
+    let arr_items = [];
+    const embed = new EmbedBuilder()
+      .setColor(0x1CDB00);
+    user[0].items.forEach(element => {
+      embed.addFields({ name: element.name, value: `[Website Link](${element.url})`, inline: false });
+      embed.addFields({ name: " ", value: `- - Current Price: ${element.current.price} - - \n Lowest Price: ${element.lowest.price} \n  Highest Price: ${element.highest.price}`, inline: true });
+      arr_items.push({ label: `Delete: ${element.name.slice(0, 40)}`, description: `${arr_items.length}`, value: `${arr_items.length}` })
+    });
+    const row_dropdown = new ActionRowBuilder().addComponents(
+      new StringSelectMenuBuilder()
+        .setCustomId("deletemenu")
+        .setPlaceholder("Delete an Item")
+        .addOptions(arr_items));
+    await interaction.editReply({ embeds: [embed], components: [row_dropdown], ephemeral: true });
+    setTimeout(() => interaction.deleteReply(), 10000);
+
+  }
+
 });
 
 
-async function Run(item) {
+async function Run(discordid, item) {
   const url = item.url;
   const selector = item.selector;
   const browser = await puppeteer.launch();
@@ -186,7 +209,7 @@ async function Run(item) {
       timeout: 0,
     });
 
-  await page.reload();
+  // await page.reload();
 
   // evaluate and return text
   const value = await page.evaluate((selector) => {
@@ -200,10 +223,7 @@ async function Run(item) {
 
   const floatprice = parseFloat(stri);
 
-
-  
-  console.log(`Parser found: ${floatprice}`);
-
+  // console.log(`Parser found: ${floatprice}`);
 
   if (floatprice !== item.current.price) {
     if (floatprice >= item.current.price) {
@@ -211,8 +231,14 @@ async function Run(item) {
       item.highest.date = date.toLocaleDateString();
     }
     if (floatprice <= item.current.price) {
+
       item.lowest.price = floatprice;
       item.lowest.date = date.toLocaleDateString();
+
+      client.users.fetch(discordid).then((user) => {
+        user.send(`Price Alert! Price low! \n $${item.name} \n $${floatprice} ${item.current.price} \n ${item.url})`);
+      });
+
     }
     item.current.price = floatprice;
     item.current.date = date.toLocaleDateString();
@@ -221,28 +247,14 @@ async function Run(item) {
   if (item.lowest.price === 0) {
     item.lowest.price = item.current.price;
   }
-  console.log(item.current.price);
+  
+  console.log(`[${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}]${discordid} - ${item.name} \n ${item.current.price}`);
   // return floatprice;
   await browser.close();
 }
 
-// async function Execute_Data_Checks() {
-//   for (let i = 0; i < usersPrefs.length; i++) {
-//     const price = await Run(usersPrefs[i].target.url, usersPrefs[i].target.selector, usersPrefs[i].userId, usersPrefs[i].target.itemName);
-//     console.log(`q ${price}`);
-//     usersPrefs[i].target.storedPrice = price;
-//   }
-// }
-// Execute_Data_Checks();
- 
-
-async function test1() {
-  const temp = str1.concat("726243976927248412").concat(str2);
-  const user = await User.find({ discordId: '726243976927248412' });
-
-}
 //
-Run_Parse_Website(); 
+Run_Parse_Website();
 //<<MAIN parser  
 
 async function Run_Parse_Website() {
@@ -251,7 +263,7 @@ async function Run_Parse_Website() {
       if (err) console.log(err);
       for (let i = 0; i < resp.length; i++) {
         for (let y = 0; y < resp[i].items.length; y++) {
-          Run(resp[i].items[y]).then(() => resp[i].save());
+          Run(resp[i].discordId, resp[i].items[y]).then(() => resp[i].save());
           // console.log(`${resp[i].items[y].name} Price ${resp[i].items[y].current.price}`);
         }
       }
@@ -270,19 +282,6 @@ setInterval(async () => {
 }, 900000);
 
 
-async function Add_Item_Validation(disId, url, selector, itemName) {
-  try {
-    const browser = await puppeteer.launch();
-    const page = await browser.newPage();
-    await page.goto(url, { waitUntil: 'load', timeout: 0 })
-    // lib.Add_New_to_Database(disId, url, selector, itemName);
-
-  } catch (e) {
-    // const chanl = client.channels.cache.get('1073243133346848771');
-    // chanl.send(`Website not found \n ${url}`);
-    console.log("WEBSITE invalid");
-  }
-}
 
 async function Website_Validator(url) {
   try {
@@ -300,10 +299,10 @@ async function Website_Validator(url) {
     const string = val.retPrice.replace('$', '').replace(',', '');
     const floatprice = parseFloat(string);
     await browser.close();
-    return {accepted: true, price: floatprice, name: val.retName, selector: val.retSelector};
+    return { accepted: true, price: floatprice, name: val.retName, selector: val.retSelector };
 
   } catch (e) {
-    return {accepted: false};
+    return { accepted: false };
   }
 }
 //Website_Validator(
@@ -323,58 +322,63 @@ async function getWebsite(url, page) {
     value = await page.evaluate(() => {
       const priceElement = document.querySelectorAll(".priceView-hero-price.priceView-customer-price span")[0].innerText;
       const nameElement = document.querySelector(".heading-5.v-fw-regular").innerText;
-      return {retPrice: priceElement, retName: nameElement, retSelector: ".priceView-hero-price.priceView-customer-price span"};
+      return { retPrice: priceElement, retName: nameElement, retSelector: ".priceView-hero-price.priceView-customer-price span" };
     });
-  } 
+  }
   else if (url.includes("lenovo.com")) {
     console.log('lenovo site detected');
     value = await page.evaluate(() => {
-      // const priceElement = document.querySelector(".final-price").innerText;
       const priceElement = document.querySelectorAll(".final-price")[0].innerText;
       const nameElement = document.querySelector(".product_summary").innerText;
-      return {retPrice: priceElement, retName: nameElement, retSelector: ".final-price"};
+      return { retPrice: priceElement, retName: nameElement, retSelector: ".final-price" };
     });
   }
   else if (url.includes("microcenter.com")) {
     console.log('microcenter site detected');
     value = await page.evaluate(() => {
-      // const priceElement = document.querySelector(".final-price").innerText;
       const priceElement = document.querySelectorAll(".big-price")[0].innerText;
       const nameElement = document.querySelector(".productTitle").textContent;
       console.log(priceElement);
-      return {retPrice: priceElement, retName: nameElement, retSelector: ".big-price"};
+      return { retPrice: priceElement, retName: nameElement, retSelector: ".big-price" };
     });
   }
   else if (url.includes("amazon.com")) {
     console.log('amazon site detected');
     value = await page.evaluate(() => {
-      // const priceElement = document.querySelector(".final-price").innerText;
       const priceElement = document.querySelectorAll(".a-offscreen")[0].innerText;
       const nameElement = document.querySelector(".a-size-large.product-title-word-break").textContent;
       console.log(priceElement);
-      return {retPrice: priceElement, retName: nameElement, retSelector: ".a-offscreen"};
+      return { retPrice: priceElement, retName: nameElement, retSelector: ".a-offscreen" };
+    });
+  } else if (url.includes("clock.zone")) {
+    console.log('test site detected');
+    value = await page.evaluate(() => {
+      const priceElement = document.querySelectorAll("#mm")[0].innerText;
+      const nameElement = "test using time"
+      console.log(priceElement);
+      return { retPrice: priceElement, retName: nameElement, retSelector: "#mm" };
     });
   }
   console.log(value);
   return value;
 }
 
-async function Database_Validation(url, discordid){
-    if(await User.exists({discordId: discordid})){
-    const user = await User.where('discordId').equals(discordid.toString()); 
-   // console.log(user[0]);
-    for(let i = 0; i < user[0].items.length; i++){
-      if(user[0].items[i].url === url){
+async function Database_Validation(url, discordid) {
+  if (await User.exists({ discordId: discordid })) {
+    const user = await User.where('discordId').equals(discordid.toString());
+    // console.log(user[0]);
+    for (let i = 0; i < user[0].items.length; i++) {
+      if (user[0].items[i].url === url) {
         //item match deny
         return true;
       }
     }
     //no item match proceed
     return false;
-  } else{
+  } else {
     console.log("User does not exiist creating user..");
     lib.Add_New_User(discordid);
     return false;
   }
-} 
+}
 
