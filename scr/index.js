@@ -175,7 +175,7 @@ client.on(Events.InteractionCreate, async interaction => {
 
 
     await interaction.update({ content: "hello", ephemeral: true, components: [] });
-    setTimeout(() => interaction.deleteReply(), 40000);
+    
     const user = await User.where('discordId').equals(interaction.user.id.toString());
     let arr_items = [];
     const embed = new EmbedBuilder()
