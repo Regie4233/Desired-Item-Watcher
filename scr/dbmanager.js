@@ -61,6 +61,7 @@ async function exe_command() {
 
 
 async function Add_New_User(disId) {
+    console.log(`DB adding ${disId}`);
     const user = await User.create({
         discordId: disId,
         items: []
@@ -86,6 +87,7 @@ async function Add_New_to_Database(disId, url, selector, itemName) {
         }
         user[0].items.push(itemtoadd);
         await user[0].save();
+        console.log("Item Added");
     } else {
         console.log("Item Did not add no user");
     }
@@ -107,5 +109,5 @@ function ValidateUrl(toValidate, user) {
     return false;
 }
 
-module.exports = { Add_New_to_Database };
+module.exports = { Add_New_to_Database, Add_New_User };
 
