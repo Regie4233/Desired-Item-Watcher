@@ -225,6 +225,16 @@ async function Run(item) {
   await browser.close();
 }
 
+// async function Execute_Data_Checks() {
+//   for (let i = 0; i < usersPrefs.length; i++) {
+//     const price = await Run(usersPrefs[i].target.url, usersPrefs[i].target.selector, usersPrefs[i].userId, usersPrefs[i].target.itemName);
+//     console.log(`q ${price}`);
+//     usersPrefs[i].target.storedPrice = price;
+//   }
+// }
+// Execute_Data_Checks();
+ 
+
 async function test1() {
   const temp = str1.concat("726243976927248412").concat(str2);
   const user = await User.find({ discordId: '726243976927248412' });
@@ -259,22 +269,18 @@ setInterval(async () => {
 }, 900000);
 
 
+async function Add_Item_Validation(disId, url, selector, itemName) {
+  try {
+    const browser = await puppeteer.launch();
+    const page = await browser.newPage();
+    await page.goto(url, { waitUntil: 'load', timeout: 0 })
+    // lib.Add_New_to_Database(disId, url, selector, itemName);
 
-Run_Parse_Website();
-
-async function Run_Parse_Website() {
-
-  User.find({}, (err, resp) => {
-    if (err) console.log(err);
-    for (let i = 0; i < resp.length; i++) {
-      for (let y = 0; y < resp[i].items.length; y++) {
-        Run(resp[i].items[y]).then(() => resp[i].save());
-        // console.log(`${resp[i].items[y].name} Price ${resp[i].items[y].current.price}`);
-      }
-    }
-
-  });
-
+  } catch (e) {
+    // const chanl = client.channels.cache.get('1073243133346848771');
+    // chanl.send(`Website not found \n ${url}`);
+    console.log("WEBSITE invalid");
+  }
 }
 
 async function Website_Validator(url) {
@@ -299,11 +305,15 @@ async function Website_Validator(url) {
     return {accepted: false};
   }
 }
-// async function comd() {
-//   await rest.put(Routes.applicationGuildCommands(client_id, guild_id), { body: [] })
-//     .then(() => console.log('Successfully deleted guild command'))
-//     .catch(console.error);
-// }
+//Website_Validator(
+//  "https://www.bestbuy.com/site/samsung-galaxy-book3-ultra-16-3k-amoled-laptop-intel-13th-gen-evo-core-i9-13900h-32gb-nvidia-geforce-rtx-4070-1tb-ssd-graphite/6531066.p?skuId=6531066");
+
+//Website_Validator("https://www.lenovo.com/us/en/p/laptops/thinkpad/thinkpadx1/x1-extreme-g4/20y5007jus?orgRef=https%253A%252F%252Fwww.digitaltrends.com%252F&clickid=RlEzS9RYTxyNUzp2dTyW1XwlUkA3yRwnPVQozI0&irgwc=1&PID=123412&acid=ww%3Aaffiliate%3Abv0as6&cid=us%3Aaffiliate%3Acxsaam");
+async function comd() {
+  await rest.put(Routes.applicationGuildCommands(client_id, guild_id), { body: [] })
+    .then(() => console.log('Successfully deleted guild command'))
+    .catch(console.error);
+}
 
 async function getWebsite(url, page) {
   let value;
