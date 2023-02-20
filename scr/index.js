@@ -259,15 +259,15 @@ Run_Parse_Website();
 
 async function Run_Parse_Website() {
   try {
-    User.find({}, (err, resp) => {
+    User.find({}, async (err, resp) => {
       if (err) console.log(err);
       for (let i = 0; i < resp.length; i++) {
-        for (let y = 0; y < resp[i].items.length; y++) {
+         for (let y = 0; y < resp[i].items.length; y++) {
           // Run(resp[i].discordId, resp[i].items[y]).then(async () => await resp[i].save());
           // console.log(`${resp[i].items[y].name} Price ${resp[i].items[y].current.price}`);
           Run(resp[i].discordId, resp[i].items[y]);
         }
-        resp[i].save()
+        await resp[i].save()
       }
     });
   } catch (e) {
