@@ -266,8 +266,9 @@ async function Run_Parse_Website() {
           // Run(resp[i].discordId, resp[i].items[y]).then(async () => await resp[i].save());
           // console.log(`${resp[i].items[y].name} Price ${resp[i].items[y].current.price}`);
           await Run(resp[i].discordId, resp[i].items[y]);
+          await resp[i].save()
         }
-        await resp[i].save()
+       
       }
     });
   } catch (e) {
