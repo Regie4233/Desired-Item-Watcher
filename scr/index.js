@@ -263,7 +263,7 @@ async function Run_Parse_Website() {
       if (err) console.log(err);
       for (let i = 0; i < resp.length; i++) {
         for (let y = 0; y < resp[i].items.length; y++) {
-          Run(resp[i].discordId, resp[i].items[y]).then(() => resp[i].save());
+          Run(resp[i].discordId, resp[i].items[y]).then(async () => await resp[i].save());
           // console.log(`${resp[i].items[y].name} Price ${resp[i].items[y].current.price}`);
         }
       }
