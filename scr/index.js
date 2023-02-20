@@ -175,7 +175,7 @@ client.on(Events.InteractionCreate, async interaction => {
 
 
     await interaction.update({ content: "hello", ephemeral: true, components: [] });
-    
+
     const user = await User.where('discordId').equals(interaction.user.id.toString());
     let arr_items = [];
     const embed = new EmbedBuilder()
@@ -247,7 +247,7 @@ async function Run(discordid, item) {
   if (item.lowest.price === 0) {
     item.lowest.price = item.current.price;
   }
-  
+
   console.log(`[${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}]${discordid} - ${item.name} \n ${item.current.price}`);
   // return floatprice;
   await browser.close();
@@ -261,16 +261,20 @@ async function Run_Parse_Website() {
   try {
     User.find({}, async (err, resp) => {
       if (err) console.log(err);
-      for (let i = 0; i < resp.length; i++) {
-         for (let y = 0; y < resp[i].items.length; y++) {
-          // Run(resp[i].discordId, resp[i].items[y]).then(async () => await resp[i].save());
-          // console.log(`${resp[i].items[y].name} Price ${resp[i].items[y].current.price}`);
-          await Run(resp[i].discordId, resp[i].items[y]);
-          await resp[i].save()
+      // for (let i = 0; i < resp.length; i++) {
+      //    for (let y = 0; y < resp[i].items.length; y++) {
+      //     await Run(resp[i].discordId, resp[i].items[y]);
+      //     await resp[i].save()
+      //   }
+      resp.forEach(async (element) => {
+        for (let y = 0; y < element.items.length; y++) {
+          await Run(element.discordId, element.items[y]);
+          await element.save()
         }
-       
-      }
+      });
     });
+    
+
   } catch (e) {
     console.log(e);
   }
@@ -279,9 +283,9 @@ async function Run_Parse_Website() {
 setInterval(async () => {
 
   await Run_Parse_Website();
+  
 
-
-}, 900000);
+}, 1800000);
 
 
 
@@ -352,7 +356,7 @@ async function getWebsite(url, page) {
       console.log(priceElement);
       return { retPrice: priceElement, retName: nameElement, retSelector: ".a-offscreen" };
     });
-  } 
+  }
   // else if (url.includes("clock.zone")) {
   //   console.log('test site detected');
   //   value = await page.evaluate(() => {
