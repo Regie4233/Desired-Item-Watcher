@@ -351,15 +351,16 @@ async function getWebsite(url, page) {
       console.log(priceElement);
       return { retPrice: priceElement, retName: nameElement, retSelector: ".a-offscreen" };
     });
-  } else if (url.includes("clock.zone")) {
-    console.log('test site detected');
-    value = await page.evaluate(() => {
-      const priceElement = document.querySelectorAll("#mm")[0].innerText;
-      const nameElement = "test using time"
-      console.log(priceElement);
-      return { retPrice: priceElement, retName: nameElement, retSelector: "#mm" };
-    });
-  }
+  } 
+  // else if (url.includes("clock.zone")) {
+  //   console.log('test site detected');
+  //   value = await page.evaluate(() => {
+  //     const priceElement = document.querySelectorAll("#mm")[0].innerText;
+  //     const nameElement = "test using time"
+  //     console.log(priceElement);
+  //     return { retPrice: priceElement, retName: nameElement, retSelector: "#mm" };
+  //   });
+  // }
   console.log(value);
   return value;
 }
