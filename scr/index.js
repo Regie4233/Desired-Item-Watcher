@@ -132,7 +132,7 @@ client.on(Events.InteractionCreate, async interaction => {
         .addOptions(arr_items));
 
     await interaction.reply({ embeds: [embed], components: [row_dropdown], ephemeral: true });
-    setTimeout(() => interaction.deleteReply(), 45000);
+    //setTimeout(() => interaction.deleteReply(), 45000);
   }
 
 
