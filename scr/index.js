@@ -137,27 +137,28 @@ client.on(Events.InteractionCreate, async interaction => {
     //setTimeout(() => interaction.deleteReply(), 45000);
   } else if (interaction.commandName === 'adminfetchall') {
     const user = await User.find({});
-    const embed = new EmbedBuilder().setColor(0xF2E30C).setTimestamp();
+    const embed = new EmbedBuilder().setColor(0xF2E30C);
     let arr_item = [];
     let str = "items ";
-    user.forEach(element => {
-      console.log(element);
-      for (let i = 0; i < element.items.length; i++) {
-        arr_item.push(element.items[i]);
-      }
-      arr_item.forEach(element => {
-        // console.log(element);
-        str = str.concat("\n -", element.name);
-        str = str.concat("\n", `>cur ${element.current.price} >low ${element.lowest.price} >hig ${element.highest.price}`);
+    user.forEach((element) => {
+     
+      // console.log(element);
+      // for (let i = 0; i < element.items.length; i++) {
+      //   arr_item.push(element.items[i]);
+      // }
+      element.items.forEach((itm) => {
+         console.log(element);
+        str = str.concat("\n -", itm.name);
+        str = str.concat("\n", `>cur ${itm.current.price} >low ${itm.lowest.price} >hig ${itm.highest.price}`);
         str = str.concat("\n");
       });
-      console.log(str);
-      embed.addFields({name: element.discordId, value:str, inline: true});
+     console.log(str);
+      embed.addFields({ name: element.discordId, value: str, inline: true });
     });
 
     await interaction.reply({ embeds: [embed], ephemeral: true });
   }
-  
+
 
 });
 
@@ -380,7 +381,7 @@ async function getWebsite(url, page) {
       console.log(priceElement);
       return { retPrice: priceElement, retName: nameElement, retSelector: ".a-offscreen" };
     });
-  } 
+  }
   else if (url.includes("newegg.com")) {
     console.log('newegg site detected');
     value = await page.evaluate(() => {
