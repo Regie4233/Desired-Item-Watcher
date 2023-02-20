@@ -4,6 +4,7 @@ const { Client, GatewayIntentBits, ModalBuilder, ActionRowBuilder, TextInputBuil
 const { REST } = require('@discordjs/rest');
 const commandRequest = require('./comamnds/request');
 const commandFetch = require('./comamnds/fetch');
+const commandFetchAll = require('./comamnds/adminfetchall');
 const { default: puppeteer } = require("puppeteer");
 
 
@@ -17,7 +18,7 @@ mongoose.connect("mongodb://127.0.0.1/sw-usersDb", (x) => {
   Initialize_Bot();
 });
 const User = require('./user_model');
-const date = new Date();
+
 
 const str1 = '<@';
 const str2 = '>';
@@ -83,7 +84,8 @@ async function Initialize_Bot() {
   try {
     const commands = [
       commandRequest.data.toJSON(),
-      commandFetch.data.toJSON()
+      commandFetch.data.toJSON(),
+      commandFetchAll.data.toJSON()
     ];
     console.log('Started refreshing application (/) commands.');
     await rest.put(Routes.applicationGuildCommands(client_id, guild_id), { body: commands },);
@@ -133,8 +135,29 @@ client.on(Events.InteractionCreate, async interaction => {
 
     await interaction.reply({ embeds: [embed], components: [row_dropdown], ephemeral: true });
     //setTimeout(() => interaction.deleteReply(), 45000);
-  }
+  } else if (interaction.commandName === 'adminfetchall') {
+    const user = await User.find({});
+    const embed = new EmbedBuilder().setColor(0xF2E30C).setTimestamp();
+    let arr_item = [];
+    let str = "items ";
+    user.forEach(element => {
+      console.log(element);
+      for (let i = 0; i < element.items.length; i++) {
+        arr_item.push(element.items[i]);
+      }
+      arr_item.forEach(element => {
+        // console.log(element);
+        str = str.concat("\n -", element.name);
+        str = str.concat("\n", `>cur ${element.current.price} >low ${element.lowest.price} >hig ${element.highest.price}`);
+        str = str.concat("\n");
+      });
+      console.log(str);
+      embed.addFields({name: element.discordId, value:str, inline: true});
+    });
 
+    await interaction.reply({ embeds: [embed], ephemeral: true });
+  }
+  
 
 });
 
@@ -203,6 +226,7 @@ async function Run(discordid, item) {
   const selector = item.selector;
   const browser = await puppeteer.launch();
   const page = await browser.newPage();
+  const date = new Date();
   await page.goto(url,
     {
       waitUntil: "networkidle2",
@@ -273,7 +297,7 @@ async function Run_Parse_Website() {
         }
       });
     });
-    
+
 
   } catch (e) {
     console.log(e);
@@ -283,7 +307,7 @@ async function Run_Parse_Website() {
 setInterval(async () => {
 
   await Run_Parse_Website();
-  
+
 
 }, 1800000);
 
@@ -355,6 +379,34 @@ async function getWebsite(url, page) {
       const nameElement = document.querySelector(".a-size-large.product-title-word-break").textContent;
       console.log(priceElement);
       return { retPrice: priceElement, retName: nameElement, retSelector: ".a-offscreen" };
+    });
+  } 
+  else if (url.includes("newegg.com")) {
+    console.log('newegg site detected');
+    value = await page.evaluate(() => {
+      const priceElement = document.querySelectorAll(".price-current-label")[0].innerText;
+      const nameElement = document.querySelector(".product-title").textContent;
+      console.log(priceElement);
+      return { retPrice: priceElement, retName: nameElement, retSelector: ".price-current-label" };
+    });
+  }
+  else if (url.includes("bhphotovideo.com")) {
+    console.log('bhphoto site detected');
+    value = await page.evaluate(() => {
+      const priceElement = document.querySelectorAll(".price_L0iytPTSvv")[0].innerText;
+      const nameElement = document.querySelector("h1.text_TAw0W35QK_").textContent;
+      console.log(priceElement);
+      return { retPrice: priceElement, retName: nameElement, retSelector: ".price_L0iytPTSvv" };
+    });
+    // BH website not working
+  }
+  else if (url.includes("zotacstore.com")) {
+    console.log('zotac store site detected');
+    value = await page.evaluate(() => {
+      const priceElement = document.querySelectorAll("span.price")[0].innerText;
+      const nameElement = document.querySelector(".product-name").textContent;
+      console.log(priceElement);
+      return { retPrice: priceElement, retName: nameElement, retSelector: ".span.price" };
     });
   }
   // else if (url.includes("clock.zone")) {
