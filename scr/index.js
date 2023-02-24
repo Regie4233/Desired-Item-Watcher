@@ -305,7 +305,12 @@ setInterval(async () => {
 
 }, 1800000);
 
-
+async function GetWebsite_Selector(url){
+  if(url.includes()){
+    
+  }
+  return {nameSelector: "", priceSelector: ""}
+}
 
 async function Website_Validator(url) {
   try {
