@@ -227,10 +227,10 @@ async function Run(discordid, item) {
   await page.waitForSelector(selector)
   // evaluate and return text
   const value = await page.evaluate((selector) => {
-    const bbb = document.querySelectorAll(`${selector}`)[0].innerText;
+    const bbb = document.querySelectorAll(selector)[0].innerText;
     // const bbb = document.querySelector(selector);
-    const text = bbb;
-    return text;
+    console.log(bbb);
+    return bbb;
   }, selector);
   await browser.close();
 
