@@ -277,21 +277,25 @@ Run_Parse_Website();
 
 async function Run_Parse_Website() {
   try {
-    User.find({}, (err, resp) => {
+    // User.find({}, (err, resp) => {
+    //   if (err) console.log(err);
+    //   resp.forEach(async (element) => {
+    //     for (let y = 0; y < element.items.length; y++) {
+    //       await Run(element.discordId, element.items[y]);
+    //       await element.save()
+    //     }
+    //   });
+    // });
+    const arr_usr = User.find({}, (err, resp) => {
       if (err) console.log(err);
-      // for (let i = 0; i < resp.length; i++) {
-      //    for (let y = 0; y < resp[i].items.length; y++) {
-      //     await Run(resp[i].discordId, resp[i].items[y]);
-      //     await resp[i].save()
-      //   }
-      resp.forEach(async (element) => {
-        for (let y = 0; y < element.items.length; y++) {
-          await Run(element.discordId, element.items[y]);
-          await element.save()
-        }
-      });
+      
     });
-
+    arr_usr.forEach(async (element) => {
+      for (let y = 0; y < element.items.length; y++) {
+        await Run(element.discordId, element.items[y]);
+        await element.save()
+      }
+    });
 
   } catch (e) {
     console.log(e);
