@@ -287,8 +287,9 @@ async function Run_Parse_Website() {
     //   });
     // });
     let arr_usr = [];
-    arr_usr = User.find({}, (err, resp) => {
+    User.find({}, (err, resp) => {
       if (err) console.log(err);
+      arr_usr = resp;
       
     });
     arr_usr.forEach(async (element) => {
