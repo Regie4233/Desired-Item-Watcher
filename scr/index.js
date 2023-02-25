@@ -306,9 +306,78 @@ setInterval(async () => {
 }, 1800000);
 
 async function GetWebsite_Selector(url){
-  if(url.includes()){
-    
-  }
+  const nameSelector = "empty name";
+  const priceView = "empty string price";
+    if (url.includes("bestbuy.com")) {
+      console.log('bestbuy site detected');
+      const value = await page.evaluate(() => {
+        const priceElement = document.querySelectorAll(".priceView-hero-price.priceView-customer-price span")[0].innerText;
+        const nameElement = document.querySelector(".heading-5.v-fw-regular").innerText;
+      });
+    }
+    else if (url.includes("lenovo.com")) {
+      console.log('lenovo site detected');
+      const value = await page.evaluate(() => {
+        const priceElement = document.querySelectorAll(".final-price")[0].innerText;
+        const nameElement = document.querySelector(".product_summary").innerText;
+      });
+    }
+    else if (url.includes("microcenter.com")) {
+      console.log('microcenter site detected');
+      const value = await page.evaluate(() => {
+        const priceElement = document.querySelectorAll(".big-price")[0].innerText;
+        const nameElement = document.querySelector(".productTitle").textContent;
+        console.log(priceElement);
+        
+      });
+    }
+    else if (url.includes("amazon.com")) {
+      console.log('amazon site detected');
+      const value = await page.evaluate(() => {
+        const priceElement = document.querySelectorAll("span.a-offscreen")[0].innerText;
+        const nameElement = document.querySelector("span#productTitle").textContent;
+        console.log(priceElement);
+       
+      });
+    }
+    else if (url.includes("newegg.com")) {
+      console.log('newegg site detected');
+      const value = await page.evaluate(() => {
+        const priceElement = document.querySelectorAll(".price-current")[0].innerText;
+        const nameElement = document.querySelector(".product-title").textContent;
+        console.log(priceElement);
+        
+      });
+    }
+    else if (url.includes("bhphotovideo.com")) {
+      console.log('bhphoto site detected');
+      const value = await page.evaluate(() => {
+        const priceElement = document.querySelectorAll(".price_L0iytPTSvv")[0].innerText;
+        const nameElement = document.querySelector("h1.text_TAw0W35QK_").textContent;
+        console.log(priceElement);
+        
+      });
+      // BH website not working
+    }
+    else if (url.includes("zotacstore.com")) {
+      console.log('zotac store site detected');
+      const value = await page.evaluate(() => {
+        const priceElement = document.querySelectorAll("span.price")[0].innerText;
+        const nameElement = document.querySelector(".product-name").textContent;
+        console.log(priceElement);
+       
+      });
+    }
+    else if (url.includes("regie4233.github.io")) {
+      console.log('bot test site detected');
+      const value = await page.evaluate(() => {
+        const priceElement = document.querySelectorAll("div.some-price")[0].innerText;
+        const nameElement = document.querySelector(".mutitle").textContent;
+        console.log(priceElement);
+        
+      });
+    }
+  
   return {nameSelector: "", priceSelector: ""}
 }
 
