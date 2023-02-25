@@ -224,7 +224,7 @@ async function Run(discordid, item) {
     });
 
   // await page.reload();
-
+  await page.waitForSelector(selector)
   // evaluate and return text
   const value = await page.evaluate((selector) => {
     const bbb = document.querySelectorAll(selector)[0].innerText;
@@ -232,39 +232,43 @@ async function Run(discordid, item) {
     const text = bbb;
     return text;
   }, selector);
+  await browser.close();
 
   const stri = value.replace('$', '').replace(',', '');
 
   const floatprice = parseFloat(stri);
 
-  // console.log(`Parser found: ${floatprice}`);
+  console.log(`Parser found: ${item.name} stri:${value} ${floatprice}`);
+  if (!isNaN(floatprice)) {
+    if (floatprice !== item.current.price) {
+      if (floatprice >= item.current.price) {
+        item.highest.price = floatprice;
+        item.highest.date = date.toLocaleDateString();
+      }
+      if (floatprice <= item.current.price) {
 
-  if (floatprice !== item.current.price) {
-    if (floatprice >= item.current.price) {
-      item.highest.price = floatprice;
-      item.highest.date = date.toLocaleDateString();
+        item.lowest.price = floatprice;
+        item.lowest.date = date.toLocaleDateString();
+
+        client.users.fetch(discordid).then((user) => {
+          user.send(`Price Alert! Price low! \n $${item.name} \n $${floatprice} ${item.current.price} \n ${item.url})`);
+        });
+
+      }
+      item.current.price = floatprice;
+      item.current.date = date.toLocaleDateString();
+
     }
-    if (floatprice <= item.current.price) {
-
-      item.lowest.price = floatprice;
-      item.lowest.date = date.toLocaleDateString();
-
-      client.users.fetch(discordid).then((user) => {
-        user.send(`Price Alert! Price low! \n $${item.name} \n $${floatprice} ${item.current.price} \n ${item.url})`);
-      });
-
+    if (item.lowest.price === 0) {
+      item.lowest.price = item.current.price;
     }
-    item.current.price = floatprice;
-    item.current.date = date.toLocaleDateString();
 
+    console.log(`[${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}]${discordid} - ${item.name} \n ${item.current.price}`);
+    // return floatprice;
+    //   await browser.close();
+  }else{
+    console.log(`NaN detected! ${item.name}`);
   }
-  if (item.lowest.price === 0) {
-    item.lowest.price = item.current.price;
-  }
-
-  console.log(`[${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}]${discordid} - ${item.name} \n ${item.current.price}`);
-  // return floatprice;
-  await browser.close();
 }
 
 //
@@ -273,7 +277,7 @@ Run_Parse_Website();
 
 async function Run_Parse_Website() {
   try {
-    User.find({}, async (err, resp) => {
+    User.find({}, (err, resp) => {
       if (err) console.log(err);
       // for (let i = 0; i < resp.length; i++) {
       //    for (let y = 0; y < resp[i].items.length; y++) {
@@ -434,26 +438,18 @@ async function getWebsite(url, page) {
   }
   else if (url.includes("amazon.com")) {
     console.log('amazon site detected');
-    const priceSelector = "a-offscreen";
-    const nameSelector = ".a-size-large.product-title-word-break";
-    await page.waitForSelector(priceSelector);
-    await page.waitForSelector(nameSelector);
-    value = await page.evaluate((priceSelector, nameSelector) => {
-      const priceElement = document.querySelectorAll(priceSelector)[0].innerText;
-      const nameElement = document.querySelector(nameSelector).textContent;
+    value = await page.evaluate(() => {
+      const priceElement = document.querySelectorAll(".a-offscreen")[0].innerText;
+      const nameElement = document.querySelector(".a-size-large.product-title-word-break").textContent;
       console.log(priceElement);
-      return { retPrice: priceElement, retName: nameElement, retSelector: priceSelector };
+      return { retPrice: priceElement, retName: nameElement, retSelector: ".a-offscreen" };
     });
   }
   else if (url.includes("newegg.com")) {
     console.log('newegg site detected');
-    const priceSelector = ".price-current-label";
-    const nameSelector = ".product-title";
-    await page.waitForSelector(priceSelector);
-    await page.waitForSelector(nameSelector);
-    value = await page.evaluate((priceSelector, nameSelector) => {
-      const priceElement = document.querySelectorAll(priceSelector)[0].innerText;
-      const nameElement = document.querySelector(nameSelector).textContent;
+    value = await page.evaluate(() => {
+      const priceElement = document.querySelectorAll(".price-current-label")[0].innerText;
+      const nameElement = document.querySelector(".product-title").textContent;
       console.log(priceElement);
       return { retPrice: priceElement, retName: nameElement, retSelector: priceSelector };
     });
@@ -471,6 +467,15 @@ async function getWebsite(url, page) {
       return { retPrice: priceElement, retName: nameElement, retSelector: priceSelector };
     });
   }
+  // else if (url.includes("clock.zone")) {
+  //   console.log('test site detected');
+  //   value = await page.evaluate(() => {
+  //     const priceElement = document.querySelectorAll("#mm")[0].innerText;
+  //     const nameElement = "test using time"
+  //     console.log(priceElement);
+  //     return { retPrice: priceElement, retName: nameElement, retSelector: "#mm" };
+  //   });
+  // }
   console.log(value);
   return value;
 }
