@@ -240,42 +240,42 @@ async function Run(discordid, item) {
     const stri = value.replace('$', '').replace(',', '');
 
     const floatprice = parseFloat(stri);
+
+
+    console.log(`Parser found: ${item.name} stri:${value} ${floatprice}`);
+    if (!isNaN(floatprice)) {
+      if (floatprice !== item.current.price) {
+        if (floatprice >= item.current.price) {
+          item.highest.price = floatprice;
+          item.highest.date = date.toLocaleDateString();
+        }
+        if (floatprice <= item.current.price) {
+
+          item.lowest.price = floatprice;
+          item.lowest.date = date.toLocaleDateString();
+
+          client.users.fetch(discordid).then((user) => {
+            user.send(`Price Alert! Price low! \n $${item.name} \n $${floatprice} ${item.current.price} \n ${item.url})`);
+          });
+
+        }
+        item.current.price = floatprice;
+        item.current.date = date.toLocaleDateString();
+
+      }
+      if (item.lowest.price === 0) {
+        item.lowest.price = item.current.price;
+      }
+
+      console.log(`[${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}]${discordid} - ${item.name} \n ${item.current.price}`);
+      // return floatprice;
+      //   await browser.close();
+    } else {
+      console.log(`NaN detected! ${item.name}`);
+    }
   } catch (e) {
     console(`goto+ eval failed ${e}`);
   }
-
-  console.log(`Parser found: ${item.name} stri:${value} ${floatprice}`);
-  if (!isNaN(floatprice)) {
-    if (floatprice !== item.current.price) {
-      if (floatprice >= item.current.price) {
-        item.highest.price = floatprice;
-        item.highest.date = date.toLocaleDateString();
-      }
-      if (floatprice <= item.current.price) {
-
-        item.lowest.price = floatprice;
-        item.lowest.date = date.toLocaleDateString();
-
-        client.users.fetch(discordid).then((user) => {
-          user.send(`Price Alert! Price low! \n $${item.name} \n $${floatprice} ${item.current.price} \n ${item.url})`);
-        });
-
-      }
-      item.current.price = floatprice;
-      item.current.date = date.toLocaleDateString();
-
-    }
-    if (item.lowest.price === 0) {
-      item.lowest.price = item.current.price;
-    }
-
-    console.log(`[${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}]${discordid} - ${item.name} \n ${item.current.price}`);
-    // return floatprice;
-    //   await browser.close();
-  } else {
-    console.log(`NaN detected! ${item.name}`);
-  }
-
 }
 
 //
