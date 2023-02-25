@@ -286,7 +286,7 @@ async function Run_Parse_Website() {
     //     }
     //   });
     // });
-    const arr_usr = [];
+    let arr_usr = [];
     arr_usr = User.find({}, (err, resp) => {
       if (err) console.log(err);
       
