@@ -212,31 +212,37 @@ client.on(Events.InteractionCreate, async interaction => {
 
 
 async function Run(discordid, item) {
-  const url = item.url;
-  const selector = item.selector;
-  const browser = await puppeteer.launch();
-  const page = await browser.newPage();
-  const date = new Date();
-  await page.goto(url,
-    {
-      waitUntil: "networkidle2",
-      timeout: 0,
-    });
+  try {
+    const url = item.url;
+    const selector = item.selector;
+    const browser = await puppeteer.launch();
+    const page = await browser.newPage();
+    const date = new Date();
 
-  // await page.reload();
-  await page.waitForSelector(selector)
-  // evaluate and return text
-  const value = await page.evaluate((selector) => {
-    const bbb = document.querySelectorAll(selector)[0].innerText;
-    // const bbb = document.querySelector(selector);
-    console.log(bbb);
-    return bbb;
-  }, selector);
-  await browser.close();
+    await page.goto(url,
+      {
+        waitUntil: "networkidle2",
+        timeout: 0,
+      });
 
-  const stri = value.replace('$', '').replace(',', '');
+    // await page.reload();
+    await page.waitForSelector(selector);
+    // evaluate and return text
+    const value = await page.evaluate((selector) => {
+      const bbb = document.querySelectorAll(selector)[0].innerText;
+      // const bbb = document.querySelector(selector);
+      console.log(bbb);
+      return bbb;
+    }, selector);
 
-  const floatprice = parseFloat(stri);
+    await browser.close();
+
+    const stri = value.replace('$', '').replace(',', '');
+
+    const floatprice = parseFloat(stri);
+  } catch (e) {
+    console(`goto+ eval failed ${e}`);
+  }
 
   console.log(`Parser found: ${item.name} stri:${value} ${floatprice}`);
   if (!isNaN(floatprice)) {
@@ -266,9 +272,10 @@ async function Run(discordid, item) {
     console.log(`[${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}]${discordid} - ${item.name} \n ${item.current.price}`);
     // return floatprice;
     //   await browser.close();
-  }else{
+  } else {
     console.log(`NaN detected! ${item.name}`);
   }
+
 }
 
 //
@@ -290,7 +297,7 @@ async function Run_Parse_Website() {
     // User.find({}, (err, resp) => {
     //   if (err) console.log(err);
     //   arr_usr = resp;
-      
+
     // });
     // arr_usr.forEach(async (element) => {
     //   for (let y = 0; y < element.items.length; y++) {
@@ -311,80 +318,80 @@ setInterval(async () => {
 
 }, 1800000);
 
-async function GetWebsite_Selector(url){
+async function GetWebsite_Selector(url) {
   const nameSelector = "empty name";
   const priceView = "empty string price";
-    if (url.includes("bestbuy.com")) {
-      console.log('bestbuy site detected');
-      const value = await page.evaluate(() => {
-        const priceElement = document.querySelectorAll(".priceView-hero-price.priceView-customer-price span")[0].innerText;
-        const nameElement = document.querySelector(".heading-5.v-fw-regular").innerText;
-      });
-    }
-    else if (url.includes("lenovo.com")) {
-      console.log('lenovo site detected');
-      const value = await page.evaluate(() => {
-        const priceElement = document.querySelectorAll(".final-price")[0].innerText;
-        const nameElement = document.querySelector(".product_summary").innerText;
-      });
-    }
-    else if (url.includes("microcenter.com")) {
-      console.log('microcenter site detected');
-      const value = await page.evaluate(() => {
-        const priceElement = document.querySelectorAll(".big-price")[0].innerText;
-        const nameElement = document.querySelector(".productTitle").textContent;
-        console.log(priceElement);
-        
-      });
-    }
-    else if (url.includes("amazon.com")) {
-      console.log('amazon site detected');
-      const value = await page.evaluate(() => {
-        const priceElement = document.querySelectorAll("span.a-offscreen")[0].innerText;
-        const nameElement = document.querySelector("span#productTitle").textContent;
-        console.log(priceElement);
-       
-      });
-    }
-    else if (url.includes("newegg.com")) {
-      console.log('newegg site detected');
-      const value = await page.evaluate(() => {
-        const priceElement = document.querySelectorAll(".price-current")[0].innerText;
-        const nameElement = document.querySelector(".product-title").textContent;
-        console.log(priceElement);
-        
-      });
-    }
-    else if (url.includes("bhphotovideo.com")) {
-      console.log('bhphoto site detected');
-      const value = await page.evaluate(() => {
-        const priceElement = document.querySelectorAll(".price_L0iytPTSvv")[0].innerText;
-        const nameElement = document.querySelector("h1.text_TAw0W35QK_").textContent;
-        console.log(priceElement);
-        
-      });
-      // BH website not working
-    }
-    else if (url.includes("zotacstore.com")) {
-      console.log('zotac store site detected');
-      const value = await page.evaluate(() => {
-        const priceElement = document.querySelectorAll("span.price")[0].innerText;
-        const nameElement = document.querySelector(".product-name").textContent;
-        console.log(priceElement);
-       
-      });
-    }
-    else if (url.includes("regie4233.github.io")) {
-      console.log('bot test site detected');
-      const value = await page.evaluate(() => {
-        const priceElement = document.querySelectorAll("div.some-price")[0].innerText;
-        const nameElement = document.querySelector(".mutitle").textContent;
-        console.log(priceElement);
-        
-      });
-    }
-  
-  return {nameSelector: "", priceSelector: ""}
+  if (url.includes("bestbuy.com")) {
+    console.log('bestbuy site detected');
+    const value = await page.evaluate(() => {
+      const priceElement = document.querySelectorAll(".priceView-hero-price.priceView-customer-price span")[0].innerText;
+      const nameElement = document.querySelector(".heading-5.v-fw-regular").innerText;
+    });
+  }
+  else if (url.includes("lenovo.com")) {
+    console.log('lenovo site detected');
+    const value = await page.evaluate(() => {
+      const priceElement = document.querySelectorAll(".final-price")[0].innerText;
+      const nameElement = document.querySelector(".product_summary").innerText;
+    });
+  }
+  else if (url.includes("microcenter.com")) {
+    console.log('microcenter site detected');
+    const value = await page.evaluate(() => {
+      const priceElement = document.querySelectorAll(".big-price")[0].innerText;
+      const nameElement = document.querySelector(".productTitle").textContent;
+      console.log(priceElement);
+
+    });
+  }
+  else if (url.includes("amazon.com")) {
+    console.log('amazon site detected');
+    const value = await page.evaluate(() => {
+      const priceElement = document.querySelectorAll("span.a-offscreen")[0].innerText;
+      const nameElement = document.querySelector("span#productTitle").textContent;
+      console.log(priceElement);
+
+    });
+  }
+  else if (url.includes("newegg.com")) {
+    console.log('newegg site detected');
+    const value = await page.evaluate(() => {
+      const priceElement = document.querySelectorAll(".price-current")[0].innerText;
+      const nameElement = document.querySelector(".product-title").textContent;
+      console.log(priceElement);
+
+    });
+  }
+  else if (url.includes("bhphotovideo.com")) {
+    console.log('bhphoto site detected');
+    const value = await page.evaluate(() => {
+      const priceElement = document.querySelectorAll(".price_L0iytPTSvv")[0].innerText;
+      const nameElement = document.querySelector("h1.text_TAw0W35QK_").textContent;
+      console.log(priceElement);
+
+    });
+    // BH website not working
+  }
+  else if (url.includes("zotacstore.com")) {
+    console.log('zotac store site detected');
+    const value = await page.evaluate(() => {
+      const priceElement = document.querySelectorAll("span.price")[0].innerText;
+      const nameElement = document.querySelector(".product-name").textContent;
+      console.log(priceElement);
+
+    });
+  }
+  else if (url.includes("regie4233.github.io")) {
+    console.log('bot test site detected');
+    const value = await page.evaluate(() => {
+      const priceElement = document.querySelectorAll("div.some-price")[0].innerText;
+      const nameElement = document.querySelector(".mutitle").textContent;
+      console.log(priceElement);
+
+    });
+  }
+
+  return { nameSelector: "", priceSelector: "" }
 }
 
 async function Website_Validator(url) {
