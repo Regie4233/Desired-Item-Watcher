@@ -274,7 +274,7 @@ async function Run(discordid, item) {
       console.log(`NaN detected! ${item.name}`);
     }
   } catch (e) {
-    console(`goto+ eval failed ${e}`);
+    console.log(`goto+ eval failed ${e}`);
   }
 }
 
