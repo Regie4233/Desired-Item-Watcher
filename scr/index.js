@@ -168,14 +168,14 @@ client.on(Events.InteractionCreate, async interaction => {
         if (!await Database_Validation(url_sbmt, interaction.user.id)) {
           await interaction.editReply({ content: `Success! Adding to pool..`, ephemeral: true });
           await lib.Add_New_to_Database(interaction.user.id, url_sbmt, itemSelector, itemName);
-          setTimeout(() => interaction.deleteReply(), 6000);
+          //  setTimeout(() => interaction.deleteReply(), 6000);
         } else {
           await interaction.editReply({ content: `Website already exists in your account!`, ephemeral: true });
-          setTimeout(() => interaction.deleteReply(), 6000);
+          // setTimeout(() => interaction.deleteReply(), 6000);
         }
       } else {
         await interaction.editReply({ content: `Website is invalid! Try again`, ephemeral: true });
-        setTimeout(() => interaction.deleteReply(), 6000);
+        // setTimeout(() => interaction.deleteReply(), 6000);
       }
     }
   }
@@ -297,10 +297,10 @@ async function Run_Parse_Website() {
       resp.forEach(async (element) => {
         let final_report = '';
         for (let y = 0; y < element.items.length; y++) {
-          const report = await Run(element.discordId, element.items[y]);
-          await element.save();
-          console.log(report);
-          final_report = final_report.concat(`${report.name} \n Status: ${report.status} \n Price: ${report.price} \n`)
+
+          // await Run(element.discordId, element.items[y]);
+          await Run_Evaluator(element.discordId, element.items[y]);
+          await element.save()
         }
         console.log(`Report: ${date.getDate()}-${date.getMonth()+1}-${date.getFullYear()} \n ${date.getHours()}:${date.getMinutes()} \n ${final_report}`);
         client.channels.cache.get('1074809115844550756').send(`Report: ${date.getDate()}-${date.getMonth()+1}-${date.getFullYear()} \n ${date.getHours()}:${date.getMinutes()} \n ${final_report}`);
@@ -334,82 +334,66 @@ setInterval(async () => {
 
 }, 10800000);
 
-async function GetWebsite_Selector(url) {
-  const nameSelector = "empty name";
-  const priceView = "empty string price";
-  if (url.includes("bestbuy.com")) {
-    console.log('bestbuy site detected');
-    const value = await page.evaluate(() => {
-      const priceElement = document.querySelectorAll(".priceView-hero-price.priceView-customer-price span")[0].innerText;
-      const nameElement = document.querySelector(".heading-5.v-fw-regular").innerText;
-    });
-  }
-  else if (url.includes("lenovo.com")) {
-    console.log('lenovo site detected');
-    const value = await page.evaluate(() => {
-      const priceElement = document.querySelectorAll(".final-price")[0].innerText;
-      const nameElement = document.querySelector(".product_summary").innerText;
-    });
-  }
-  else if (url.includes("microcenter.com")) {
-    console.log('microcenter site detected');
-    const value = await page.evaluate(() => {
-      const priceElement = document.querySelectorAll(".big-price")[0].innerText;
-      const nameElement = document.querySelector(".productTitle").textContent;
-      console.log(priceElement);
 
-    });
-  }
-  else if (url.includes("amazon.com")) {
-    console.log('amazon site detected');
-    const value = await page.evaluate(() => {
-      const priceElement = document.querySelectorAll("span.a-offscreen")[0].innerText;
-      const nameElement = document.querySelector("span#productTitle").textContent;
-      console.log(priceElement);
+async function Run_Evaluator(discordid, item) {
+  try {
+    const url = item.url;
+    const browser = await puppeteer.launch();
+    const page = await browser.newPage();
+    const date = new Date();
+    await page.goto(url,
+      {
+        waitUntil: "networkidle2",
+        timeout: 0,
+      });
 
-    });
-  }
-  else if (url.includes("newegg.com")) {
-    console.log('newegg site detected');
-    const value = await page.evaluate(() => {
-      const priceElement = document.querySelectorAll("li.price-current")[0].innerText;
-      const nameElement = document.querySelector(".product-title").textContent;
-      console.log(priceElement);
+    const evaluated = await getWebsite(url, page)
+    await browser.close();
 
-    });
-  }
-  else if (url.includes("bhphotovideo.com")) {
-    console.log('bhphoto site detected');
-    const value = await page.evaluate(() => {
-      const priceElement = document.querySelectorAll(".price_L0iytPTSvv")[0].innerText;
-      const nameElement = document.querySelector("h1.text_TAw0W35QK_").textContent;
-      console.log(priceElement);
+    if (!isNaN(evaluated)) {
 
-    });
-    // BH website not working
-  }
-  else if (url.includes("zotacstore.com")) {
-    console.log('zotac store site detected');
-    const value = await page.evaluate(() => {
-      const priceElement = document.querySelectorAll("span.price")[0].innerText;
-      const nameElement = document.querySelector(".product-name").textContent;
-      console.log(priceElement);
+      const stri = evaluated.retPrice.replace('$', '').replace(',', '');
 
-    });
-  }
-  else if (url.includes("regie4233.github.io")) {
-    console.log('bot test site detected');
-    const value = await page.evaluate(() => {
-      const priceElement = document.querySelectorAll("div.some-price")[0].innerText;
-      const nameElement = document.querySelector(".mutitle").textContent;
-      console.log(priceElement);
+      const floatprice = parseFloat(stri);
 
-    });
-  }
+      // console.log(`Parser found: ${floatprice}`);
 
-  return { nameSelector: "", priceSelector: "" }
+      if (floatprice !== item.current.price) {
+        if (floatprice >= item.current.price) {
+          item.highest.price = floatprice;
+          item.highest.date = date.toLocaleDateString();
+        }
+        if (floatprice <= item.current.price) {
+
+          item.lowest.price = floatprice;
+          item.lowest.date = date.toLocaleDateString();
+
+          client.users.fetch(discordid).then((user) => {
+            user.send(`Price Alert! Price low! \n $${item.name} \n $${floatprice} ${item.current.price} \n ${item.url})`);
+          });
+
+        }
+        item.current.price = floatprice;
+        item.current.date = date.toLocaleDateString();
+
+      }
+      if (item.lowest.price === 0) {
+        item.lowest.price = item.current.price;
+      }
+
+      console.log(`[${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}]${discordid} - ${item.name} \n ${item.current.price}`);
+      // return floatprice;
+     
+
+    } else {
+      console.log(`not a number detected! ${item.name}`);
+    }
+  } catch (e) {
+    console.log(e);
+  }
 }
 
+ 
 async function Website_Validator(url) {
   try {
     console.log("validating site");
@@ -446,73 +430,70 @@ async function getWebsite(url, page) {
   let value;
   if (url.includes("bestbuy.com")) {
     console.log('bestbuy site detected');
-    value = await page.evaluate(() => {
-      const priceElement = document.querySelectorAll(".priceView-hero-price.priceView-customer-price span")[0].innerText;
-      const nameElement = document.querySelector(".heading-5.v-fw-regular").innerText;
-      return { retPrice: priceElement, retName: nameElement, retSelector: ".priceView-hero-price.priceView-customer-price span" };
+    const priceSelector = ".priceView-hero-price.priceView-customer-price span";
+    const nameSelector = ".heading-5.v-fw-regular";
+    await page.waitForSelector(priceSelector);
+    await page.waitForSelector(nameSelector);
+    value = await page.evaluate((priceSelector, nameSelector) => {
+      const priceElement = document.querySelectorAll(priceSelector)[0].innerText;
+      const nameElement = document.querySelector(nameSelector).innerText;
+      return { retPrice: priceElement, retName: nameElement, retSelector: priceSelector };
     });
   }
   else if (url.includes("lenovo.com")) {
     console.log('lenovo site detected');
-    value = await page.evaluate(() => {
-      const priceElement = document.querySelectorAll(".final-price")[0].innerText;
-      const nameElement = document.querySelector(".product_summary").innerText;
-      return { retPrice: priceElement, retName: nameElement, retSelector: ".final-price" };
+    const priceSelector = "span.final-price";
+    const nameSelector = ".product_summary";
+    await page.waitForSelector(priceSelector);
+    await page.waitForSelector(nameSelector);
+    value = await page.evaluate((priceSelector, nameSelector) => {
+      const priceElement = document.querySelector(priceSelector).textContent;
+      const nameElement = document.querySelector(nameSelector).textContent;
+      return { retPrice: priceElement, retName: nameElement, retSelector: priceSelector };
     });
   }
   else if (url.includes("microcenter.com")) {
     console.log('microcenter site detected');
-    value = await page.evaluate(() => {
-      const priceElement = document.querySelectorAll(".big-price")[0].innerText;
-      const nameElement = document.querySelector(".productTitle").textContent;
+    const priceSelector = ".big-price";
+    const nameSelector = ".productTitle";
+    await page.waitForSelector(priceSelector);
+    await page.waitForSelector(nameSelector);
+    value = await page.evaluate((priceSelector, nameSelector) => {
+      const priceElement = document.querySelectorAll(priceSelector)[0].innerText;
+      const nameElement = document.querySelector(nameSelector).textContent;
       console.log(priceElement);
-      return { retPrice: priceElement, retName: nameElement, retSelector: ".big-price" };
+      return { retPrice: priceElement, retName: nameElement, retSelector: priceSelector };
     });
   }
   else if (url.includes("amazon.com")) {
     console.log('amazon site detected');
     value = await page.evaluate(() => {
-      const priceElement = document.querySelectorAll("span.a-offscreen")[0].innerText;
-      const nameElement = document.querySelector("span#productTitle").textContent;
+      const priceElement = document.querySelectorAll(".a-offscreen")[0].innerText;
+      const nameElement = document.querySelector(".a-size-large.product-title-word-break").textContent;
       console.log(priceElement);
-      return { retPrice: priceElement, retName: nameElement, retSelector: "span.a-offscreen" };
+      return { retPrice: priceElement, retName: nameElement, retSelector: ".a-offscreen" };
     });
   }
   else if (url.includes("newegg.com")) {
     console.log('newegg site detected');
     value = await page.evaluate(() => {
-      const priceElement = document.querySelectorAll(".price-current")[0].innerText;
+      const priceElement = document.querySelectorAll(".price-current-label")[0].innerText;
       const nameElement = document.querySelector(".product-title").textContent;
       console.log(priceElement);
-      return { retPrice: priceElement, retName: nameElement, retSelector: ".price-current-label" };
+      return { retPrice: priceElement, retName: nameElement, retSelector: priceSelector };
     });
-  }
-  else if (url.includes("bhphotovideo.com")) {
-    console.log('bhphoto site detected');
-    value = await page.evaluate(() => {
-      const priceElement = document.querySelectorAll(".price_L0iytPTSvv")[0].innerText;
-      const nameElement = document.querySelector("h1.text_TAw0W35QK_").textContent;
-      console.log(priceElement);
-      return { retPrice: priceElement, retName: nameElement, retSelector: ".price_L0iytPTSvv" };
-    });
-    // BH website not working
   }
   else if (url.includes("zotacstore.com")) {
     console.log('zotac store site detected');
-    value = await page.evaluate(() => {
-      const priceElement = document.querySelectorAll("span.price")[0].innerText;
-      const nameElement = document.querySelector(".product-name").textContent;
+    const priceSelector = "span.price";
+    const nameSelector = ".product-name";
+    await page.waitForSelector(priceSelector);
+    await page.waitForSelector(nameSelector);
+    value = await page.evaluate((priceSelector, nameSelector) => {
+      const priceElement = document.querySelectorAll(priceSelector)[0].innerText;
+      const nameElement = document.querySelector(nameSelector).textContent;
       console.log(priceElement);
-      return { retPrice: priceElement, retName: nameElement, retSelector: ".span.price" };
-    });
-  }
-  else if (url.includes("regie4233.github.io")) {
-    console.log('bot test site detected');
-    value = await page.evaluate(() => {
-      const priceElement = document.querySelectorAll("div.some-price")[0].innerText;
-      const nameElement = document.querySelector(".mutitle").textContent;
-      console.log(priceElement);
-      return { retPrice: priceElement, retName: nameElement, retSelector: "div.some-price" };
+      return { retPrice: priceElement, retName: nameElement, retSelector: priceSelector };
     });
   }
   // else if (url.includes("clock.zone")) {
