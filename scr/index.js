@@ -268,13 +268,17 @@ async function Run(discordid, item) {
       }
 
       console.log(`[${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}]${discordid} - ${item.name} \n ${item.current.price}`);
-      // return floatprice;
+      return { status: 'Parsing Success!', price: item.current.price, name: item.name };
       //   await browser.close();
+
+
     } else {
       console.log(`NaN detected! ${item.name}`);
+      return { status: 'NaN Detect!', price: 'none', name: item.name };
     }
   } catch (e) {
     console.log(`goto+ eval failed ${e}`);
+    return { status: `Evaluation Failed ${e}`, price: 'none', name: 'none' };
   }
 }
 
@@ -284,15 +288,27 @@ Run_Parse_Website();
 
 async function Run_Parse_Website() {
   try {
+    const date = new Date();
+
     User.find({}, (err, resp) => {
       if (err) console.log(err);
+
+      
       resp.forEach(async (element) => {
+        let final_report = '';
         for (let y = 0; y < element.items.length; y++) {
-          await Run(element.discordId, element.items[y]);
-          await element.save()
+          const report = await Run(element.discordId, element.items[y]);
+          await element.save();
+          console.log(report);
+          final_report = final_report.concat(`${report.name} \n Status: ${report.status} \n Price: ${report.price} \n`)
         }
+        console.log(`Report: ${date.getDate()}-${date.getMonth()+1}-${date.getFullYear()} \n ${date.getHours()}:${date.getMinutes()} \n ${final_report}`);
+        client.channels.cache.get('1074809115844550756').send(`Report: ${date.getDate()}-${date.getMonth()+1}-${date.getFullYear()} \n ${date.getHours()}:${date.getMinutes()} \n ${final_report}`);
       });
+      
     });
+
+
     // let arr_usr = [];
     // User.find({}, (err, resp) => {
     //   if (err) console.log(err);
@@ -316,7 +332,7 @@ setInterval(async () => {
   await Run_Parse_Website();
 
 
-}, 1800000);
+}, 10800000);
 
 async function GetWebsite_Selector(url) {
   const nameSelector = "empty name";
@@ -356,7 +372,7 @@ async function GetWebsite_Selector(url) {
   else if (url.includes("newegg.com")) {
     console.log('newegg site detected');
     const value = await page.evaluate(() => {
-      const priceElement = document.querySelectorAll(".price-current")[0].innerText;
+      const priceElement = document.querySelectorAll("li.price-current")[0].innerText;
       const nameElement = document.querySelector(".product-title").textContent;
       console.log(priceElement);
 
