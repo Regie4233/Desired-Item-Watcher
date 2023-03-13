@@ -212,62 +212,73 @@ client.on(Events.InteractionCreate, async interaction => {
 
 
 async function Run(discordid, item) {
-  const url = item.url;
-  const selector = item.selector;
-  const browser = await puppeteer.launch();
-  const page = await browser.newPage();
-  const date = new Date();
-  await page.goto(url,
-    {
-      waitUntil: "networkidle2",
-      timeout: 0,
-    });
+  try {
+    const url = item.url;
+    const selector = item.selector;
+    const browser = await puppeteer.launch();
+    const page = await browser.newPage();
+    const date = new Date();
 
-  // await page.reload();
-  await page.waitForSelector(selector)
-  // evaluate and return text
-  const value = await page.evaluate((selector) => {
-    const bbb = document.querySelectorAll(selector)[0].innerText;
-    // const bbb = document.querySelector(selector);
-    const text = bbb;
-    return text;
-  }, selector);
-  await browser.close();
+    await page.goto(url,
+      {
+        waitUntil: "networkidle2",
+        timeout: 0,
+      });
 
-  const stri = value.replace('$', '').replace(',', '');
+    // await page.reload();
+    await page.waitForSelector(selector);
+    // evaluate and return text
+    const value = await page.evaluate((selector) => {
+      const bbb = document.querySelectorAll(selector)[0].innerText;
+      // const bbb = document.querySelector(selector);
+      console.log(bbb);
+      return bbb;
+    }, selector);
 
-  const floatprice = parseFloat(stri);
+    await browser.close();
 
-  console.log(`Parser found: ${item.name} stri:${value} ${floatprice}`);
-  if (!isNaN(floatprice)) {
-    if (floatprice !== item.current.price) {
-      if (floatprice >= item.current.price) {
-        item.highest.price = floatprice;
-        item.highest.date = date.toLocaleDateString();
+    const stri = value.replace('$', '').replace(',', '');
+
+    const floatprice = parseFloat(stri);
+
+
+    console.log(`Parser found: ${item.name} stri:${value} ${floatprice}`);
+    if (!isNaN(floatprice)) {
+      if (floatprice !== item.current.price) {
+        if (floatprice >= item.current.price) {
+          item.highest.price = floatprice;
+          item.highest.date = date.toLocaleDateString();
+        }
+        if (floatprice <= item.current.price) {
+
+          item.lowest.price = floatprice;
+          item.lowest.date = date.toLocaleDateString();
+
+          client.users.fetch(discordid).then((user) => {
+            user.send(`Price Alert! Price low! \n $${item.name} \n $${floatprice} ${item.current.price} \n ${item.url})`);
+          });
+
+        }
+        item.current.price = floatprice;
+        item.current.date = date.toLocaleDateString();
+
       }
-      if (floatprice <= item.current.price) {
-
-        item.lowest.price = floatprice;
-        item.lowest.date = date.toLocaleDateString();
-
-        client.users.fetch(discordid).then((user) => {
-          user.send(`Price Alert! Price low! \n $${item.name} \n $${floatprice} ${item.current.price} \n ${item.url})`);
-        });
-
+      if (item.lowest.price === 0) {
+        item.lowest.price = item.current.price;
       }
-      item.current.price = floatprice;
-      item.current.date = date.toLocaleDateString();
 
-    }
-    if (item.lowest.price === 0) {
-      item.lowest.price = item.current.price;
-    }
+      console.log(`[${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}]${discordid} - ${item.name} \n ${item.current.price}`);
+      return { status: 'Parsing Success!', price: item.current.price, name: item.name };
+      //   await browser.close();
 
-    console.log(`[${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}]${discordid} - ${item.name} \n ${item.current.price}`);
-    // return floatprice;
-    //   await browser.close();
-  }else{
-    console.log(`NaN detected! ${item.name}`);
+
+    } else {
+      console.log(`NaN detected! ${item.name}`);
+      return { status: 'NaN Detect!', price: 'none', name: item.name };
+    }
+  } catch (e) {
+    console.log(`goto+ eval failed ${e}`);
+    return { status: `Evaluation Failed ${e}`, price: 'none', name: 'none' };
   }
 }
 
@@ -277,22 +288,39 @@ Run_Parse_Website();
 
 async function Run_Parse_Website() {
   try {
+    const date = new Date();
+
     User.find({}, (err, resp) => {
       if (err) console.log(err);
-      // for (let i = 0; i < resp.length; i++) {
-      //    for (let y = 0; y < resp[i].items.length; y++) {
-      //     await Run(resp[i].discordId, resp[i].items[y]);
-      //     await resp[i].save()
-      //   }
+
+      
       resp.forEach(async (element) => {
+        let final_report = '';
         for (let y = 0; y < element.items.length; y++) {
+
           // await Run(element.discordId, element.items[y]);
           await Run_Evaluator(element.discordId, element.items[y]);
           await element.save()
         }
+        console.log(`Report: ${date.getDate()}-${date.getMonth()+1}-${date.getFullYear()} \n ${date.getHours()}:${date.getMinutes()} \n ${final_report}`);
+        client.channels.cache.get('1074809115844550756').send(`Report: ${date.getDate()}-${date.getMonth()+1}-${date.getFullYear()} \n ${date.getHours()}:${date.getMinutes()} \n ${final_report}`);
       });
+      
     });
 
+
+    // let arr_usr = [];
+    // User.find({}, (err, resp) => {
+    //   if (err) console.log(err);
+    //   arr_usr = resp;
+
+    // });
+    // arr_usr.forEach(async (element) => {
+    //   for (let y = 0; y < element.items.length; y++) {
+    //     await Run(element.discordId, element.items[y]);
+    //     await element.save()
+    //   }
+    // });
 
   } catch (e) {
     console.log(e);
@@ -304,7 +332,8 @@ setInterval(async () => {
   await Run_Parse_Website();
 
 
-}, 1800000);
+}, 10800000);
+
 
 async function Run_Evaluator(discordid, item) {
   try {
@@ -364,7 +393,7 @@ async function Run_Evaluator(discordid, item) {
   }
 }
 
-
+ 
 async function Website_Validator(url) {
   try {
     console.log("validating site");
