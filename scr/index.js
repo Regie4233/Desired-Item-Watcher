@@ -372,7 +372,7 @@ async function GetWebsite_Selector(url) {
   else if (url.includes("newegg.com")) {
     console.log('newegg site detected');
     const value = await page.evaluate(() => {
-      const priceElement = document.querySelectorAll("li.price-current")[0].innerText;
+      const priceElement = document.querySelectorAll("li.price-current")[0].textContent;
       const nameElement = document.querySelector(".product-title").textContent;
       console.log(priceElement);
 
